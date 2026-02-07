@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ToneShift — AI Text Tone Transformer</title>
+  <meta name="description" content="Transform any text into any tone instantly. Professional, Gen Z, Shakespeare, Pirate, and more. Free AI-powered text rewriter.">
+  <meta property="og:title" content="ToneShift — AI Text Tone Transformer">
+  <meta property="og:description" content="Rewrite anything in any tone. Professional ↔ Gen Z ↔ Shakespeare ↔ Pirate. Try it free!">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://delta.abapture.ai">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --surface2: #1a1a26;
+      --border: #2a2a3a;
+      --text: #e8e8f0;
+      --text-muted: #8888a0;
+      --accent: #7c5cfc;
+      --accent-glow: rgba(124, 92, 252, 0.3);
+      --gradient: linear-gradient(135deg, #7c5cfc 0%, #c084fc 50%, #f472b6 100%);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated gradient background */
+    .bg-glow {
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 40%, rgba(124, 92, 252, 0.08) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 60%, rgba(244, 114, 182, 0.06) 0%, transparent 50%);
+      animation: glowMove 20s ease-in-out infinite;
+      z-index: 0;
+    }
+    @keyframes glowMove {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(-5%, 3%); }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      padding: 3rem 0 2rem;
+    }
+    .logo {
+      font-size: 3rem;
+      font-weight: 900;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.02em;
+    }
+    .tagline {
+      color: var(--text-muted);
+      font-size: 1.15rem;
+      margin-top: 0.5rem;
+      font-weight: 400;
+    }
+    .free-badge {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.4rem 1rem;
+      background: rgba(124, 92, 252, 0.15);
+      border: 1px solid rgba(124, 92, 252, 0.3);
+      border-radius: 100px;
+      font-size: 0.85rem;
+      color: #c084fc;
+      font-weight: 500;
+    }
+
+    /* Main card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-top: 2rem;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 1rem;
+      resize: vertical;
+      transition: border-color 0.2s;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    textarea::placeholder { color: var(--text-muted); opacity: 0.6; }
+
+    /* Tone grid */
+    .tone-section { margin-top: 1.5rem; }
+    .tone-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.6rem;
+      margin-top: 0.5rem;
+    }
+    .tone-btn {
+      padding: 0.7rem 0.8rem;
+      background: var(--surface2);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .tone-btn:hover {
+      border-color: var(--accent);
+      background: rgba(124, 92, 252, 0.1);
+      transform: translateY(-1px);
+    }
+    .tone-btn.active {
+      border-color: var(--accent);
+      background: rgba(124, 92, 252, 0.2);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+    .tone-emoji { font-size: 1.2rem; display: block; margin-bottom: 0.2rem; }
+
+    /* Transform button */
+    .transform-btn {
+      width: 100%;
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: var(--gradient);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-family: inherit;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .transform-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px var(--accent-glow); }
+    .transform-btn:active { transform: translateY(0); }
+    .transform-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* Result */
+    .result-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-top: 1.5rem;
+      display: none;
+      animation: slideUp 0.4s ease;
+    }
+    .result-card.show { display: block; }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .result-tone {
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+    .result-text {
+      background: var(--surface2);
+      border-radius: 12px;
+      padding: 1.25rem;
+      line-height: 1.7;
+      font-size: 1rem;
+      white-space: pre-wrap;
+    }
+    .result-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+    .action-btn {
+      padding: 0.5rem 1rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .action-btn:hover { border-color: var(--accent); background: rgba(124, 92, 252, 0.1); }
+
+    /* Remaining counter */
+    .remaining {
+      text-align: center;
+      margin-top: 1rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    .remaining strong { color: var(--accent); }
+
+    /* Upgrade banner */
+    .upgrade-banner {
+      background: linear-gradient(135deg, rgba(124, 92, 252, 0.15), rgba(244, 114, 182, 0.15));
+      border: 1px solid rgba(124, 92, 252, 0.3);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-top: 2rem;
+      text-align: center;
+      display: none;
+    }
+    .upgrade-banner.show { display: block; }
+    .upgrade-banner h3 { font-size: 1.3rem; margin-bottom: 0.5rem; }
+    .upgrade-banner p { color: var(--text-muted); margin-bottom: 1rem; }
+    .upgrade-btn {
+      padding: 0.8rem 2rem;
+      background: var(--gradient);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .upgrade-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px var(--accent-glow); }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-right: 0.5rem;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      padding: 0.8rem 1.5rem;
+      font-size: 0.9rem;
+      transition: transform 0.3s ease;
+      z-index: 100;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 3rem 0 2rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    /* Examples */
+    .examples {
+      margin-top: 2rem;
+      text-align: center;
+    }
+    .examples p {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 0.75rem;
+    }
+    .example-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .example-chip {
+      padding: 0.4rem 0.8rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .example-chip:hover { border-color: var(--accent); color: var(--text); }
+
+    /* Success/cancel banners */
+    .status-banner {
+      padding: 1rem;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 1rem;
+      font-weight: 500;
+      display: none;
+    }
+    .status-banner.success {
+      background: rgba(52, 211, 153, 0.15);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      color: #34d399;
+      display: block;
+    }
+    .status-banner.canceled {
+      background: rgba(251, 146, 60, 0.15);
+      border: 1px solid rgba(251, 146, 60, 0.3);
+      color: #fb923c;
+      display: block;
+    }
+
+    @media (max-width: 600px) {
+      .container { padding: 1rem; }
+      .logo { font-size: 2.2rem; }
+      .card { padding: 1.25rem; }
+      .tone-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  
+  <div class="container">
+    <header>
+      <div class="logo">ToneShift</div>
+      <p class="tagline">Transform any text into any tone, instantly.</p>
+      <span class="free-badge">✨ 5 free transforms / day</span>
+    </header>
+
+    <div id="statusBanner" class="status-banner"></div>
+
+    <div class="card">
+      <label for="inputText">Your Text</label>
+      <textarea id="inputText" placeholder="Paste your email, message, bio, or any text here..."></textarea>
+      
+      <div class="tone-section">
+        <label>Pick a Tone</label>
+        <div class="tone-grid" id="toneGrid"></div>
+      </div>
+
+      <button class="transform-btn" id="transformBtn" onclick="transform()">
+        ⚡ Transform
+      </button>
+
+      <div class="remaining" id="remaining"></div>
+    </div>
+
+    <div class="result-card" id="resultCard">
+      <div class="result-header">
+        <span class="result-tone" id="resultTone"></span>
+      </div>
+      <div class="result-text" id="resultText"></div>
+      <div class="result-actions">
+        <button class="action-btn" onclick="copyResult()">📋 Copy</button>
+        <button class="action-btn" onclick="shareResult()">🔗 Share</button>
+        <button class="action-btn" onclick="tryAnother()">🔄 Try Another Tone</button>
+      </div>
+    </div>
+
+    <div class="upgrade-banner" id="upgradeBanner">
+      <h3>🚀 Go Pro — Unlimited Transforms</h3>
+      <p>No daily limits. All tones. Priority processing. Just $5/month.</p>
+      <button class="upgrade-btn" onclick="upgrade()">Upgrade to Pro</button>
+    </div>
+
+    <div class="examples">
+      <p>Try these examples:</p>
+      <div class="example-chips">
+        <span class="example-chip" onclick="loadExample('email')">📧 Boring work email</span>
+        <span class="example-chip" onclick="loadExample('breakup')">💔 Breakup text</span>
+        <span class="example-chip" onclick="loadExample('bio')">📱 Dating profile</span>
+        <span class="example-chip" onclick="loadExample('complaint')">😤 Customer complaint</span>
+      </div>
+    </div>
+
+    <footer>
+      Built with AI · <a href="#" onclick="upgrade(); return false;">ToneShift Pro</a> · $5/mo unlimited
+    </footer>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let selectedTone = null;
+    let tones = [];
+
+    const examples = {
+      email: "Hey, just wanted to follow up on that thing we talked about last week. Can you send me the report? I need it by Friday. Thanks.",
+      breakup: "Hey, I've been thinking a lot and I think we should break up. It's not you, it's me. I just need some space right now. Sorry.",
+      bio: "I like hiking, coffee, and my dog. Looking for someone who doesn't take themselves too seriously. No drama please.",
+      complaint: "I ordered a pizza 2 hours ago and it still hasn't arrived. This is ridiculous. I want my money back.",
+    };
+
+    // Check URL params for success/cancel
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('success')) {
+      const banner = document.getElementById('statusBanner');
+      banner.className = 'status-banner success';
+      banner.textContent = '🎉 Welcome to ToneShift Pro! You now have unlimited transforms.';
+      history.replaceState({}, '', '/');
+    }
+    if (params.get('canceled')) {
+      const banner = document.getElementById('statusBanner');
+      banner.className = 'status-banner canceled';
+      banner.textContent = 'Checkout canceled. Your free transforms are still available!';
+      history.replaceState({}, '', '/');
+    }
+
+    // Load tones
+    async function loadTones() {
+      const res = await fetch('/api/tones');
+      tones = await res.json();
+      const grid = document.getElementById('toneGrid');
+      grid.innerHTML = tones.map(t => `
+        <button class="tone-btn" data-tone="${t.key}" onclick="selectTone('${t.key}', this)">
+          <span class="tone-emoji">${t.emoji}</span>
+          ${t.name}
+        </button>
+      `).join('');
+    }
+
+    function selectTone(key, el) {
+      selectedTone = key;
+      document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function loadExample(key) {
+      document.getElementById('inputText').value = examples[key];
+      document.getElementById('inputText').focus();
+    }
+
+    async function transform() {
+      const text = document.getElementById('inputText').value.trim();
+      if (!text) return showToast('Please enter some text first!');
+      if (!selectedTone) return showToast('Please pick a tone!');
+
+      const btn = document.getElementById('transformBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Transforming...';
+
+      try {
+        const res = await fetch('/api/transform', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, tone: selectedTone }),
+        });
+        const data = await res.json();
+
+        if (data.error) {
+          if (data.upgrade) {
+            document.getElementById('upgradeBanner').classList.add('show');
+            showToast('Daily limit reached! Upgrade for unlimited.');
+          } else {
+            showToast(data.error);
+          }
+          return;
+        }
+
+        const tone = tones.find(t => t.key === selectedTone);
+        document.getElementById('resultTone').textContent = `${tone.emoji} ${data.tone}`;
+        document.getElementById('resultText').textContent = data.result;
+        document.getElementById('resultCard').classList.add('show');
+        document.getElementById('remaining').innerHTML = `<strong>${data.remaining}</strong> free transforms remaining today`;
+        
+        if (data.remaining <= 2) {
+          document.getElementById('upgradeBanner').classList.add('show');
+        }
+
+        document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } catch (err) {
+        showToast('Something went wrong. Try again!');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '⚡ Transform';
+      }
+    }
+
+    function copyResult() {
+      const text = document.getElementById('resultText').textContent;
+      navigator.clipboard.writeText(text);
+      showToast('Copied to clipboard! 📋');
+    }
+
+    function shareResult() {
+      const text = document.getElementById('resultText').textContent;
+      if (navigator.share) {
+        navigator.share({ title: 'ToneShift', text, url: 'https://delta.abapture.ai' });
+      } else {
+        navigator.clipboard.writeText(`${text}\n\n— Transformed by ToneShift ✨ https://delta.abapture.ai`);
+        showToast('Copied with link! Share it anywhere 🔗');
+      }
+    }
+
+    function tryAnother() {
+      document.getElementById('resultCard').classList.remove('show');
+      document.querySelector('.tone-grid').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function upgrade() {
+      try {
+        const res = await fetch('/api/checkout', { method: 'POST' });
+        const data = await res.json();
+        if (data.url) window.location.href = data.url;
+        else showToast('Could not start checkout. Try again.');
+      } catch {
+        showToast('Checkout error. Please try again.');
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // Init
+    loadTones();
+
+    // Keyboard shortcut
+    document.getElementById('inputText').addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') transform();
+    });
+  </script>
+</body>
+</html>
