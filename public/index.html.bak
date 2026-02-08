@@ -4,19 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BriefPulse — AI Contract Analyzer</title>
-  <meta name="description" content="Understand any contract in 60 seconds. AI-powered analysis reveals red flags, risk scores, and actionable recommendations. Free — no signup required.">
-  <meta name="keywords" content="contract review, contract analyzer, free contract review, contract red flags, AI contract analysis, NDA review, lease review, freelance contract review">
-  <meta property="og:title" content="BriefPulse — AI Contract Analyzer">
-  <meta property="og:description" content="Understand any contract in 60 seconds. Upload any contract for instant risk scoring, red flag detection, and negotiation suggestions. Free.">
-  <meta property="og:url" content="https://delta.abapture.ai">
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="BriefPulse">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="BriefPulse — AI Contract Analyzer">
-  <meta name="twitter:description" content="Understand any contract in 60 seconds. Free AI-powered contract analysis.">
-  <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"WebApplication","name":"BriefPulse","url":"https://delta.abapture.ai","description":"AI-powered contract analyzer. Upload any contract for instant risk scoring, red flag detection, and negotiation suggestions.","applicationCategory":"BusinessApplication","offers":[{"@type":"Offer","price":"0","priceCurrency":"USD","description":"Free - 3 analyses per day"},{"@type":"Offer","price":"29","priceCurrency":"USD","description":"Pro Monthly - Unlimited analyses"},{"@type":"Offer","price":"199","priceCurrency":"USD","description":"Pro Annual - Save 43%"}]}
-  </script>
+  <meta name="description" content="Understand any contract in 60 seconds. AI-powered analysis reveals red flags, risk scores, and actionable recommendations.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
   <style>
     :root {
@@ -220,42 +208,6 @@
     .history-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--surface2); border-radius: 10px; margin-bottom: 0.75rem; }
     .history-meta { font-size: 0.85rem; }
     .history-risk { font-weight: 700; font-size: 1.1rem; }
-
-    /* Risk Summary Card */
-    .risk-summary-card { padding: 1.5rem; border-radius: 16px; margin-bottom: 1.5rem; border: 2px solid; }
-    .risk-summary-card.high { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.3); }
-    .risk-summary-card.medium { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.3); }
-    .risk-summary-card.low { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.3); }
-    .risk-summary-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
-    .risk-summary-icon { font-size: 2.5rem; }
-    .risk-summary-title { font-size: 1.2rem; font-weight: 700; }
-    .risk-summary-concerns { margin-top: 0.75rem; }
-    .risk-summary-concern { padding: 0.3rem 0; font-size: 0.95rem; color: var(--text-muted); }
-    .risk-summary-concern::before { content: '• '; color: var(--text-dim); }
-    .risk-overall { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 100px; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
-    .risk-overall.high { background: rgba(239,68,68,0.2); color: var(--red); }
-    .risk-overall.medium { background: rgba(245,158,11,0.2); color: var(--orange); }
-    .risk-overall.low { background: rgba(34,197,94,0.2); color: var(--green); }
-
-    /* Plain English */
-    .plain-english { background: rgba(124,92,252,0.08); border: 1px solid rgba(124,92,252,0.2); border-radius: 8px; padding: 0.6rem 0.8rem; margin-top: 0.5rem; font-size: 0.85rem; color: var(--text); }
-    .plain-english::before { content: '💡 What this means for you: '; font-weight: 700; color: var(--accent); }
-
-    /* Export options */
-    .export-bar { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
-    .export-email-form { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; }
-    .export-email-form input { padding: 0.5rem 0.75rem; font-size: 0.85rem; width: 220px; }
-
-    /* Glossary */
-    .glossary-search { margin-bottom: 1.5rem; }
-    .glossary-search input { width: 100%; padding: 0.8rem 1rem; font-size: 1rem; }
-    .glossary-item { padding: 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 0.75rem; }
-    .glossary-term { font-size: 1.1rem; font-weight: 700; color: var(--accent); }
-    .glossary-aka { font-size: 0.8rem; color: var(--text-dim); margin-top: 0.2rem; }
-    .glossary-def { font-size: 0.95rem; color: var(--text-muted); margin-top: 0.5rem; line-height: 1.6; }
-    .glossary-example { font-size: 0.85rem; color: var(--text-dim); margin-top: 0.5rem; font-style: italic; padding: 0.5rem 0.75rem; background: var(--surface2); border-radius: 6px; }
-    .glossary-example::before { content: 'Example: '; font-weight: 600; font-style: normal; color: var(--text-muted); }
-    .glossary-count { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 1rem; }
   </style>
 </head>
 <body>
@@ -267,7 +219,6 @@
         <a href="#" onclick="showPage('home'); return false;">Analyze</a>
         <a href="#" onclick="showPage('compare'); return false;">Compare</a>
         <a href="#" onclick="showPage('samples'); return false;">Samples</a>
-        <a href="#" onclick="showPage('glossary'); return false;">Glossary</a>
         <a href="#" onclick="scrollToPricing(); return false;">Pricing</a>
         <div id="auth-nav">
           <button class="nav-btn" onclick="showAuthModal('login')">Log In</button>
@@ -326,9 +277,7 @@
               <div style="margin-top:0.4rem" id="result-doctype"></div>
             </div>
             <div class="btn-group">
-              <button class="btn btn-secondary btn-sm" onclick="copyToClipboard()">📋 Copy</button>
-              <button class="btn btn-secondary btn-sm" onclick="exportPDF()">📄 PDF</button>
-              <button class="btn btn-secondary btn-sm" onclick="toggleEmailExport()">✉️ Email</button>
+              <button class="btn btn-secondary btn-sm" onclick="exportPDF()">📄 Export PDF</button>
               <button class="btn btn-secondary btn-sm" onclick="shareResult()">🔗 Share</button>
               <button class="btn btn-secondary btn-sm" onclick="newAnalysis()">+ New</button>
             </div>
@@ -347,14 +296,6 @@
             <div class="parties-list" id="parties-list"></div>
           </div>
 
-          <div id="email-export-section" class="hidden" style="margin-top:0.75rem">
-            <div class="export-email-form">
-              <input type="email" id="email-export-input" placeholder="you@example.com">
-              <button class="btn btn-primary btn-sm" onclick="sendEmailReport()">Send Report</button>
-            </div>
-            <div id="email-status" style="font-size:0.8rem;margin-top:0.3rem;color:var(--text-dim)"></div>
-          </div>
-
           <div id="share-section" class="hidden">
             <div class="share-bar">
               <input type="text" id="share-url" readonly>
@@ -362,9 +303,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Risk Summary Card -->
-        <div id="risk-summary-card" class="risk-summary-card hidden fade-in"></div>
 
         <!-- Result tabs -->
         <div class="tabs">
@@ -523,17 +461,6 @@
       </div>
     </div>
 
-    <!-- GLOSSARY PAGE -->
-    <div id="page-glossary" class="hidden">
-      <div class="section-title">📖 Contract Glossary</div>
-      <p class="section-sub">Common contract terms explained in plain English</p>
-      <div class="glossary-search">
-        <input type="text" id="glossary-search" placeholder="Search terms (e.g., indemnification, force majeure...)">
-      </div>
-      <div class="glossary-count" id="glossary-count"></div>
-      <div id="glossary-list"></div>
-    </div>
-
     <!-- ACCOUNT PAGE -->
     <div id="page-account" class="hidden">
       <div class="section-title">Your Account</div>
@@ -642,7 +569,6 @@
         document.getElementById('hero-section').classList.remove('hidden');
       }
       if (page === 'account' && currentUser) loadAccount();
-      if (page === 'glossary') loadGlossary();
       window.scrollTo(0, 0);
     }
 
@@ -719,32 +645,6 @@
         document.getElementById('parties-list').innerHTML = data.parties.map(p => `<span class="party-tag">${p}</span>`).join('');
       }
 
-      // Risk Summary Card
-      const summaryCard = document.getElementById('risk-summary-card');
-      if (data.redFlags.length > 0) {
-        const highFlags = data.redFlags.filter(f => f.severity === 'high');
-        const topConcerns = data.redFlags.slice(0, 3).map(f => f.plainEnglish || f.description);
-        const icon = data.riskLevel === 'high' ? '🚨' : data.riskLevel === 'medium' ? '⚠️' : '✅';
-        summaryCard.className = `risk-summary-card ${data.riskLevel} fade-in`;
-        summaryCard.classList.remove('hidden');
-        summaryCard.innerHTML = `
-          <div class="risk-summary-header">
-            <div class="risk-summary-icon">${icon}</div>
-            <div>
-              <div class="risk-summary-title">This contract has ${data.redFlags.length} red flag${data.redFlags.length !== 1 ? 's' : ''}${highFlags.length ? ` (${highFlags.length} high severity)` : ''}</div>
-              <span class="risk-overall ${data.riskLevel}">Overall Risk: ${data.riskLevel.toUpperCase()}</span>
-            </div>
-          </div>
-          <div class="risk-summary-concerns">
-            <div style="font-weight:600;font-size:0.85rem;color:var(--text-dim);margin-bottom:0.3rem">KEY CONCERNS:</div>
-            ${topConcerns.map(c => `<div class="risk-summary-concern">${c}</div>`).join('')}
-          </div>`;
-      } else {
-        summaryCard.className = 'risk-summary-card low fade-in';
-        summaryCard.classList.remove('hidden');
-        summaryCard.innerHTML = `<div class="risk-summary-header"><div class="risk-summary-icon">✅</div><div><div class="risk-summary-title">No major red flags detected</div><span class="risk-overall low">Overall Risk: LOW</span></div></div>`;
-      }
-
       // Red flags
       const flagsHtml = data.redFlags.length === 0
         ? '<p style="color:var(--green);font-size:1rem">✅ No major red flags detected! This contract looks relatively clean.</p>'
@@ -755,7 +655,6 @@
               <span class="flag-severity ${f.severity}">${f.severity}</span>
             </div>
             <div class="flag-desc">${f.description}</div>
-            ${f.plainEnglish ? `<div class="plain-english">${f.plainEnglish}</div>` : ''}
             ${f.context ? `<div class="flag-context">"${escHtml(f.context)}"</div>` : ''}
           </div>`).join('');
       document.getElementById('flags-list').innerHTML = `<h3>🚩 ${data.redFlags.length} Red Flag${data.redFlags.length !== 1 ? 's' : ''} Found</h3>` + flagsHtml;
@@ -791,8 +690,6 @@
       document.getElementById('contract-text').value = '';
       document.getElementById('parties-section').classList.add('hidden');
       document.getElementById('share-section').classList.add('hidden');
-      document.getElementById('risk-summary-card').classList.add('hidden');
-      document.getElementById('email-export-section').classList.add('hidden');
       currentAnalysis = null;
       currentShareId = null;
       scrollToInput();
@@ -1117,102 +1014,6 @@
         document.getElementById('demo-section').style.display = 'none';
       }
     }
-
-    // ========== COPY TO CLIPBOARD ==========
-    function copyToClipboard() {
-      if (!currentAnalysis) return;
-      const a = currentAnalysis;
-      let md = `# BriefPulse Contract Analysis Report\n\n`;
-      md += `**Document Type:** ${a.documentType?.label || 'Unknown'}\n`;
-      md += `**Risk Score:** ${a.riskScore}/100 — ${a.riskLevel?.toUpperCase()} RISK\n`;
-      md += `**Red Flags:** ${a.redFlags.length}\n\n`;
-      if (a.parties?.length) md += `**Parties:** ${a.parties.join(', ')}\n\n`;
-      md += `## Red Flags\n\n`;
-      a.redFlags.forEach(f => {
-        md += `### 🚩 ${f.name} (${f.severity})\n${f.description}\n`;
-        if (f.plainEnglish) md += `> 💡 ${f.plainEnglish}\n`;
-        md += `\n`;
-      });
-      md += `## Recommendations\n\n`;
-      a.recommendations.forEach(r => { md += `- **[${r.priority}]** ${r.text}\n`; });
-      if (a.keyTerms?.length) {
-        md += `\n## Key Terms\n\n`;
-        a.keyTerms.forEach(t => { md += `- ${t.type}: ${t.value}\n`; });
-      }
-      md += `\n---\n*Generated by BriefPulse — https://delta.abapture.ai*\n`;
-      navigator.clipboard.writeText(md).then(() => {
-        const btn = event.target;
-        btn.textContent = '✅ Copied!';
-        setTimeout(() => btn.textContent = '📋 Copy', 2000);
-      });
-    }
-
-    // ========== EMAIL EXPORT ==========
-    function toggleEmailExport() {
-      const el = document.getElementById('email-export-section');
-      el.classList.toggle('hidden');
-      if (!el.classList.contains('hidden')) document.getElementById('email-export-input').focus();
-    }
-
-    function sendEmailReport() {
-      const email = document.getElementById('email-export-input').value.trim();
-      if (!email || !email.includes('@')) return document.getElementById('email-status').textContent = 'Please enter a valid email.';
-      if (!currentAnalysis) return;
-      // Generate mailto with report summary
-      const a = currentAnalysis;
-      const subject = encodeURIComponent(`BriefPulse Report: ${a.documentType?.label || 'Contract'} Analysis (Risk: ${a.riskScore}/100)`);
-      let body = `BriefPulse Contract Analysis Report\n\n`;
-      body += `Document Type: ${a.documentType?.label || 'Unknown'}\n`;
-      body += `Risk Score: ${a.riskScore}/100 — ${a.riskLevel?.toUpperCase()} RISK\n`;
-      body += `Red Flags: ${a.redFlags.length}\n\n`;
-      body += `--- RED FLAGS ---\n\n`;
-      a.redFlags.forEach(f => {
-        body += `[${f.severity.toUpperCase()}] ${f.name}\n${f.description}\n`;
-        if (f.plainEnglish) body += `What this means: ${f.plainEnglish}\n`;
-        body += `\n`;
-      });
-      body += `--- RECOMMENDATIONS ---\n\n`;
-      a.recommendations.forEach(r => { body += `[${r.priority}] ${r.text}\n`; });
-      body += `\n---\nGenerated by BriefPulse — https://delta.abapture.ai\nThis is informational only, not legal advice.\n`;
-      window.open(`mailto:${encodeURIComponent(email)}?subject=${subject}&body=${encodeURIComponent(body)}`);
-      document.getElementById('email-status').textContent = '✅ Opening email client...';
-      setTimeout(() => document.getElementById('email-status').textContent = '', 3000);
-    }
-
-    // ========== GLOSSARY ==========
-    let glossaryData = [];
-
-    async function loadGlossary() {
-      if (glossaryData.length) return;
-      try {
-        const res = await fetch('/api/glossary');
-        glossaryData = await res.json();
-        renderGlossary(glossaryData);
-      } catch(e) {}
-    }
-
-    function renderGlossary(items) {
-      document.getElementById('glossary-count').textContent = `${items.length} terms`;
-      document.getElementById('glossary-list').innerHTML = items.map(g => `
-        <div class="glossary-item">
-          <div class="glossary-term">${escHtml(g.term)}</div>
-          ${g.aka ? `<div class="glossary-aka">Also known as: ${escHtml(g.aka)}</div>` : ''}
-          <div class="glossary-def">${escHtml(g.definition)}</div>
-          ${g.example ? `<div class="glossary-example">${escHtml(g.example)}</div>` : ''}
-        </div>`).join('');
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const searchInput = document.getElementById('glossary-search');
-      if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-          const q = e.target.value.toLowerCase();
-          if (!q) return renderGlossary(glossaryData);
-          const filtered = glossaryData.filter(g => g.term.toLowerCase().includes(q) || g.aka?.toLowerCase().includes(q) || g.definition.toLowerCase().includes(q));
-          renderGlossary(filtered);
-        });
-      }
-    });
 
     // ========== UTILS ==========
     function escHtml(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }

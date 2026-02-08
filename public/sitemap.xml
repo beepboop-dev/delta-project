@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://delta.abapture.ai/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://delta.abapture.ai/glossary</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://delta.abapture.ai/samples</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://delta.abapture.ai/compare</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://delta.abapture.ai/blog</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://delta.abapture.ai/blog/5-contract-clauses-that-could-cost-you-50k</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://delta.abapture.ai/blog/free-contract-review-online</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://delta.abapture.ai/blog/contract-red-flags-checklist</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://delta.abapture.ai/blog/nda-review-guide</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://delta.abapture.ai/blog/freelance-contract-guide</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+</urlset>

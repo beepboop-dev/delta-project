@@ -47,36 +47,36 @@ function optionalAuth(req, res, next) {
 
 // ========== RED FLAG PATTERNS (30+) ==========
 const RED_FLAG_PATTERNS = [
-  { id: 'unlimited_liability', name: 'Unlimited Liability', severity: 'high', patterns: [/unlimited liability/i, /shall be liable for all/i, /liability shall not be (limited|capped)/i, /without limitation/i], description: 'No cap on financial liability — could expose you to unlimited damages.', plainEnglish: 'This means there\'s no limit on how much money you could owe. If something goes wrong, you could be on the hook for everything — your savings, your assets, all of it.' },
-  { id: 'rights_waiver', name: 'Rights Waiver', severity: 'high', patterns: [/waive(s)? (any |all )?rights?/i, /surrender(s)? (any |all )?rights?/i, /relinquish(es)? (any |all )?rights?/i, /forfeit(s)? (any |all )?rights?/i], description: 'You may be giving up important legal rights.', plainEnglish: 'This means you\'re giving up legal protections you\'d normally have. If a dispute arises, you may have fewer options to defend yourself.' },
-  { id: 'unilateral_modification', name: 'Unilateral Modification', severity: 'high', patterns: [/may (modify|change|alter|amend|update) (this|the) (agreement|contract|terms)/i, /reserves? the right to (modify|change|alter|amend)/i, /at (its|our|their) sole discretion/i, /without (prior )?notice/i], description: 'The other party can change terms without your consent.', plainEnglish: 'This means they can change the rules of the deal whenever they want — and you\'re stuck with the new terms whether you like them or not.' },
-  { id: 'auto_renewal', name: 'Auto-Renewal Trap', severity: 'medium', patterns: [/auto(matically)?[- ]renew/i, /shall (automatically )?renew/i, /renewal period/i, /unless (written )?notice.{0,30}(days?|months?)/i], description: 'Contract auto-renews — you may be locked in if you miss the cancellation window.', plainEnglish: 'This means the contract keeps going automatically unless you cancel by a specific deadline. Miss that window and you\'re locked in for another term.' },
-  { id: 'non_compete', name: 'Non-Compete Clause', severity: 'high', patterns: [/non[- ]?compete/i, /shall not (compete|engage in|work for)/i, /covenant not to compete/i, /restrictive covenant/i, /competitive activit/i], description: 'Restricts your ability to work in your field after the contract ends.', plainEnglish: 'This means after you leave, you can\'t work for competitors or start a competing business — potentially for years. This could seriously limit your career options.' },
-  { id: 'non_solicit', name: 'Non-Solicitation', severity: 'medium', patterns: [/non[- ]?solicit/i, /shall not (solicit|recruit|hire|entice)/i, /refrain from soliciting/i], description: 'Prevents you from contacting clients or hiring employees from the other party.', plainEnglish: 'This means you can\'t reach out to their clients or try to hire their employees, even after the relationship ends.' },
-  { id: 'arbitration', name: 'Mandatory Arbitration', severity: 'medium', patterns: [/binding arbitration/i, /mandatory arbitration/i, /shall be (resolved|settled) (by|through) arbitration/i, /waive.{0,20}(right to|jury) trial/i, /class action waiver/i], description: 'Disputes must go through arbitration — you lose the right to sue in court.', plainEnglish: 'This means if there\'s a problem, you can\'t go to court. Instead, a private arbitrator decides — and their decision is usually final, with very limited appeal options.' },
-  { id: 'indemnification', name: 'Broad Indemnification', severity: 'high', patterns: [/indemnif(y|ies|ication)/i, /hold harmless/i, /defend and indemnify/i], description: 'You may be required to cover the other party\'s legal costs and damages.', plainEnglish: 'This means if someone sues them because of something related to your work, you have to pay their legal bills and any damages — even if it wasn\'t entirely your fault.' },
-  { id: 'termination_without_cause', name: 'Termination Without Cause', severity: 'medium', patterns: [/terminat(e|ion) (without|for no) cause/i, /terminat(e|ion) at (any time|will|its sole)/i, /immediately terminat/i, /terminat(e|ion) (with|upon) (\d+|thirty|sixty|ninety) days?' notice/i], description: 'The other party can end the contract at any time without reason.', plainEnglish: 'This means they can fire you or end the deal tomorrow with no explanation and potentially no severance or compensation for work in progress.' },
-  { id: 'penalty_clause', name: 'Penalty Clauses', severity: 'high', patterns: [/liquidated damages/i, /penalty (of|for|clause)/i, /early termination fee/i, /breakage fee/i, /shall pay.{0,30}(penalty|fee|damages)/i], description: 'Financial penalties for breaking the contract.', plainEnglish: 'This means if you need to exit the contract early or breach any terms, you\'ll owe a specific amount of money — sometimes a very large sum.' },
-  { id: 'ip_assignment', name: 'IP Assignment', severity: 'high', patterns: [/assign(s|ment)?.{0,30}(intellectual property|IP|copyright|patent|trademark)/i, /work(s)?[- ]?(made)?[- ]?for[- ]?hire/i, /all (work|materials|deliverables).{0,30}(belong|property of|owned by)/i, /hereby assign/i, /transfer(s)? (all |any )?(right|title|interest)/i], description: 'You may be signing away ownership of your work or ideas.', plainEnglish: 'This means everything you create — code, designs, ideas, even things you work on in your spare time — becomes their property. You can\'t use it, sell it, or even show it in your portfolio.' },
-  { id: 'non_disparagement', name: 'Non-Disparagement', severity: 'medium', patterns: [/non[- ]?disparagement/i, /shall not (make|publish|communicate).{0,30}(negative|disparaging|derogatory)/i, /refrain from.{0,20}(negative|disparaging|critical)/i, /not (criticize|disparage)/i], description: 'Prevents you from making negative public statements about the other party.', plainEnglish: 'This means you can\'t publicly criticize them — no bad reviews, no warning others about problems, no venting on social media. Even truthful statements could get you in trouble.' },
-  { id: 'moonlighting_restriction', name: 'Moonlighting Restriction', severity: 'medium', patterns: [/outside (employment|work|activities)/i, /devote.{0,20}(full|entire|exclusive).{0,20}(time|attention|effort)/i, /shall not (engage in|perform|undertake).{0,30}(other|outside|additional)/i, /exclusiv(e|ity) (of service|engagement)/i, /moonlight/i], description: 'Restricts your ability to do other work or side projects.', plainEnglish: 'This means you can\'t do freelance work, side projects, or even volunteer in your field without their permission. Your side hustle? Off limits.' },
-  { id: 'confidentiality_overbroad', name: 'Overbroad Confidentiality', severity: 'medium', patterns: [/all (information|materials|data).{0,30}confidential/i, /perpetual(ly)? confidential/i, /survive(s)? (termination|expiration).{0,30}(indefinitely|perpetual|forever)/i, /in perpetuity/i], description: 'Confidentiality obligations that are too broad or last forever.', plainEnglish: 'This means you\'re sworn to secrecy about almost everything — potentially forever. Even basic skills or knowledge you gained could be considered "confidential."' },
-  { id: 'governing_law', name: 'Unfavorable Jurisdiction', severity: 'low', patterns: [/govern(ed|ing) (by the )?law(s)? of/i, /jurisdiction of the courts of/i, /exclusive (jurisdiction|venue)/i, /submit to the jurisdiction/i], description: 'Disputes may need to be resolved in an inconvenient location.', plainEnglish: 'This means if there\'s a legal dispute, you may have to travel to another state or city to deal with it — at your own expense.' },
-  { id: 'severability_missing', name: 'Missing Severability', severity: 'low', patterns: [], description: 'No severability clause — if one part is invalid, the whole contract could fail.', plainEnglish: 'This means if a court finds one part of this contract illegal or unenforceable, the entire contract could be thrown out — which might actually hurt you.' },
-  { id: 'data_rights', name: 'Data Rights Grab', severity: 'high', patterns: [/irrevocable.{0,20}license/i, /perpetual.{0,20}license/i, /royalty[- ]?free.{0,20}license/i, /right to (use|sell|share|transfer).{0,20}(data|information|content)/i, /we (may|can|will) (use|sell|share)/i], description: 'The other party gets broad rights to use your data.', plainEnglish: 'This means they can use, sell, or share your personal data and content however they want — forever. They could sell it to advertisers or use it to train AI.' },
-  { id: 'force_majeure', name: 'One-Sided Force Majeure', severity: 'medium', patterns: [/force majeure/i, /act(s)? of god/i, /beyond.{0,20}(reasonable )?control/i], description: 'Force majeure clause may only protect one party.', plainEnglish: 'This means if something unexpected happens (pandemic, natural disaster), they can stop performing their obligations — but you might still be on the hook for yours.' },
-  { id: 'late_payment', name: 'Late Payment Terms', severity: 'medium', patterns: [/late (payment )?fee/i, /interest (on|at).{0,20}(overdue|late|unpaid)/i, /net[- ]?(30|45|60|90)/i, /payment.{0,30}(within|due in) (60|90|120)/i], description: 'Payment terms may be unfavorable — long delays or steep late fees.', plainEnglish: 'This means you might wait 60-90 days to get paid, and if you\'re late paying them, the fees and interest can add up fast.' },
-  { id: 'entire_agreement', name: 'Entire Agreement (Merger)', severity: 'low', patterns: [/entire agreement/i, /supersedes? (all )?prior/i, /merger clause/i], description: 'This overrides all previous agreements and verbal promises.', plainEnglish: 'This means any promises they made before — in emails, calls, or earlier drafts — don\'t count anymore. Only what\'s written in this document matters.' },
-  { id: 'assignment_restriction', name: 'Assignment Restriction', severity: 'low', patterns: [/may not (assign|transfer|delegate)/i, /shall not (assign|transfer)/i, /consent.{0,20}(required|necessary).{0,20}assign/i], description: 'You cannot transfer your rights under this contract.', plainEnglish: 'This means you can\'t hand off this contract to someone else — even if you sell your business or want a partner to take over.' },
-  { id: 'warranty_disclaimer', name: 'Warranty Disclaimer', severity: 'medium', patterns: [/as[- ]?is/i, /without warranty/i, /disclaims? (all |any )?(warranties|warranty)/i, /no (warranties|warranty|guarantee)/i], description: 'The other party provides no guarantees about their product/service.', plainEnglish: 'This means if their product breaks, doesn\'t work, or causes problems, they\'re not responsible. You\'re getting it "as-is" with zero guarantees.' },
-  { id: 'limitation_of_remedy', name: 'Limitation of Remedy', severity: 'medium', patterns: [/sole (and exclusive )?remedy/i, /exclusive remedy/i, /maximum (aggregate )?liability.{0,30}shall not exceed/i, /in no event.{0,20}(exceed|liable)/i], description: 'Your legal remedies may be severely limited.', plainEnglish: 'This means even if they cause you major harm, the most you can recover might be a tiny fraction of your actual losses — sometimes as little as one month\'s fees.' },
-  { id: 'survival_clause', name: 'Broad Survival Clause', severity: 'low', patterns: [/shall survive (termination|expiration)/i, /survive(s)? the (termination|expiration)/i, /obligations.{0,30}survive/i], description: 'Some obligations continue even after the contract ends.', plainEnglish: 'This means even after the deal is over, some rules still apply to you — like confidentiality, non-compete, or non-solicitation. Read carefully which ones survive.' },
-  { id: 'personal_guarantee', name: 'Personal Guarantee', severity: 'high', patterns: [/personal(ly)? guarantee/i, /individual(ly)? liable/i, /jointly and severally/i, /personal liability/i], description: 'You\'re personally liable, not just your business.', plainEnglish: 'This means your personal assets — house, car, savings — are at risk, not just your company\'s. If the business can\'t pay, they come after you personally.' },
-  { id: 'automatic_price_increase', name: 'Automatic Price Increase', severity: 'medium', patterns: [/price.{0,20}increase/i, /rate.{0,20}increase/i, /escalat(e|ion)/i, /cost of living adjustment/i, /CPI adjustment/i, /annual increase/i], description: 'Prices may increase automatically over time.', plainEnglish: 'This means the price goes up automatically — often every year. You might start paying $100/month and end up at $150/month without any new negotiation.' },
-  { id: 'no_cure_period', name: 'No Cure Period', severity: 'medium', patterns: [/immediate(ly)? terminat/i, /without.{0,20}(opportunity|right) to cure/i], description: 'No chance to fix a breach before the contract is terminated.', plainEnglish: 'This means if you make a mistake or violate any term, they can immediately end the contract — no warning, no chance to fix it.' },
-  { id: 'venue_selection', name: 'Venue Selection Clause', severity: 'low', patterns: [/exclusive venue/i, /venue shall be/i, /brought (only )?in the courts/i], description: 'Lawsuits must be filed in a specific location.', plainEnglish: 'This means if you need to take legal action, you\'d have to do it in their preferred city — which could mean expensive travel and unfamiliar courts.' },
-  { id: 'clawback', name: 'Clawback Provision', severity: 'high', patterns: [/clawback/i, /repay(ment)?.{0,30}(bonus|commission|payment)/i, /return.{0,30}(payment|compensation|bonus)/i, /refund.{0,30}(all|any) (payments|fees|amounts)/i], description: 'The other party can take back money already paid to you.', plainEnglish: 'This means money you\'ve already earned and received can be taken back. That bonus you spent? They could demand it back months later.' },
-  { id: 'moral_rights_waiver', name: 'Moral Rights Waiver', severity: 'medium', patterns: [/moral rights/i, /waive.{0,30}moral/i, /attribution/i], description: 'You waive the right to be credited for your work.', plainEnglish: 'This means they can use your work without giving you credit, modify it beyond recognition, or even put someone else\'s name on it.' },
+  { id: 'unlimited_liability', name: 'Unlimited Liability', severity: 'high', patterns: [/unlimited liability/i, /shall be liable for all/i, /liability shall not be (limited|capped)/i, /without limitation/i], description: 'No cap on financial liability — could expose you to unlimited damages.' },
+  { id: 'rights_waiver', name: 'Rights Waiver', severity: 'high', patterns: [/waive(s)? (any |all )?rights?/i, /surrender(s)? (any |all )?rights?/i, /relinquish(es)? (any |all )?rights?/i, /forfeit(s)? (any |all )?rights?/i], description: 'You may be giving up important legal rights.' },
+  { id: 'unilateral_modification', name: 'Unilateral Modification', severity: 'high', patterns: [/may (modify|change|alter|amend|update) (this|the) (agreement|contract|terms)/i, /reserves? the right to (modify|change|alter|amend)/i, /at (its|our|their) sole discretion/i, /without (prior )?notice/i], description: 'The other party can change terms without your consent.' },
+  { id: 'auto_renewal', name: 'Auto-Renewal Trap', severity: 'medium', patterns: [/auto(matically)?[- ]renew/i, /shall (automatically )?renew/i, /renewal period/i, /unless (written )?notice.{0,30}(days?|months?)/i], description: 'Contract auto-renews — you may be locked in if you miss the cancellation window.' },
+  { id: 'non_compete', name: 'Non-Compete Clause', severity: 'high', patterns: [/non[- ]?compete/i, /shall not (compete|engage in|work for)/i, /covenant not to compete/i, /restrictive covenant/i, /competitive activit/i], description: 'Restricts your ability to work in your field after the contract ends.' },
+  { id: 'non_solicit', name: 'Non-Solicitation', severity: 'medium', patterns: [/non[- ]?solicit/i, /shall not (solicit|recruit|hire|entice)/i, /refrain from soliciting/i], description: 'Prevents you from contacting clients or hiring employees from the other party.' },
+  { id: 'arbitration', name: 'Mandatory Arbitration', severity: 'medium', patterns: [/binding arbitration/i, /mandatory arbitration/i, /shall be (resolved|settled) (by|through) arbitration/i, /waive.{0,20}(right to|jury) trial/i, /class action waiver/i], description: 'Disputes must go through arbitration — you lose the right to sue in court.' },
+  { id: 'indemnification', name: 'Broad Indemnification', severity: 'high', patterns: [/indemnif(y|ies|ication)/i, /hold harmless/i, /defend and indemnify/i], description: 'You may be required to cover the other party\'s legal costs and damages.' },
+  { id: 'termination_without_cause', name: 'Termination Without Cause', severity: 'medium', patterns: [/terminat(e|ion) (without|for no) cause/i, /terminat(e|ion) at (any time|will|its sole)/i, /immediately terminat/i, /terminat(e|ion) (with|upon) (\d+|thirty|sixty|ninety) days?' notice/i], description: 'The other party can end the contract at any time without reason.' },
+  { id: 'penalty_clause', name: 'Penalty Clauses', severity: 'high', patterns: [/liquidated damages/i, /penalty (of|for|clause)/i, /early termination fee/i, /breakage fee/i, /shall pay.{0,30}(penalty|fee|damages)/i], description: 'Financial penalties for breaking the contract.' },
+  { id: 'ip_assignment', name: 'IP Assignment', severity: 'high', patterns: [/assign(s|ment)?.{0,30}(intellectual property|IP|copyright|patent|trademark)/i, /work(s)?[- ]?(made)?[- ]?for[- ]?hire/i, /all (work|materials|deliverables).{0,30}(belong|property of|owned by)/i, /hereby assign/i, /transfer(s)? (all |any )?(right|title|interest)/i], description: 'You may be signing away ownership of your work or ideas.' },
+  { id: 'non_disparagement', name: 'Non-Disparagement', severity: 'medium', patterns: [/non[- ]?disparagement/i, /shall not (make|publish|communicate).{0,30}(negative|disparaging|derogatory)/i, /refrain from.{0,20}(negative|disparaging|critical)/i, /not (criticize|disparage)/i], description: 'Prevents you from making negative public statements about the other party.' },
+  { id: 'moonlighting_restriction', name: 'Moonlighting Restriction', severity: 'medium', patterns: [/outside (employment|work|activities)/i, /devote.{0,20}(full|entire|exclusive).{0,20}(time|attention|effort)/i, /shall not (engage in|perform|undertake).{0,30}(other|outside|additional)/i, /exclusiv(e|ity) (of service|engagement)/i, /moonlight/i], description: 'Restricts your ability to do other work or side projects.' },
+  { id: 'confidentiality_overbroad', name: 'Overbroad Confidentiality', severity: 'medium', patterns: [/all (information|materials|data).{0,30}confidential/i, /perpetual(ly)? confidential/i, /survive(s)? (termination|expiration).{0,30}(indefinitely|perpetual|forever)/i, /in perpetuity/i], description: 'Confidentiality obligations that are too broad or last forever.' },
+  { id: 'governing_law', name: 'Unfavorable Jurisdiction', severity: 'low', patterns: [/govern(ed|ing) (by the )?law(s)? of/i, /jurisdiction of the courts of/i, /exclusive (jurisdiction|venue)/i, /submit to the jurisdiction/i], description: 'Disputes may need to be resolved in an inconvenient location.' },
+  { id: 'severability_missing', name: 'Missing Severability', severity: 'low', patterns: [], description: 'No severability clause — if one part is invalid, the whole contract could fail.' },
+  { id: 'data_rights', name: 'Data Rights Grab', severity: 'high', patterns: [/irrevocable.{0,20}license/i, /perpetual.{0,20}license/i, /royalty[- ]?free.{0,20}license/i, /right to (use|sell|share|transfer).{0,20}(data|information|content)/i, /we (may|can|will) (use|sell|share)/i], description: 'The other party gets broad rights to use your data.' },
+  { id: 'force_majeure', name: 'One-Sided Force Majeure', severity: 'medium', patterns: [/force majeure/i, /act(s)? of god/i, /beyond.{0,20}(reasonable )?control/i], description: 'Force majeure clause may only protect one party.' },
+  { id: 'late_payment', name: 'Late Payment Terms', severity: 'medium', patterns: [/late (payment )?fee/i, /interest (on|at).{0,20}(overdue|late|unpaid)/i, /net[- ]?(30|45|60|90)/i, /payment.{0,30}(within|due in) (60|90|120)/i], description: 'Payment terms may be unfavorable — long delays or steep late fees.' },
+  { id: 'entire_agreement', name: 'Entire Agreement (Merger)', severity: 'low', patterns: [/entire agreement/i, /supersedes? (all )?prior/i, /merger clause/i], description: 'This overrides all previous agreements and verbal promises.' },
+  { id: 'assignment_restriction', name: 'Assignment Restriction', severity: 'low', patterns: [/may not (assign|transfer|delegate)/i, /shall not (assign|transfer)/i, /consent.{0,20}(required|necessary).{0,20}assign/i], description: 'You cannot transfer your rights under this contract.' },
+  { id: 'warranty_disclaimer', name: 'Warranty Disclaimer', severity: 'medium', patterns: [/as[- ]?is/i, /without warranty/i, /disclaims? (all |any )?(warranties|warranty)/i, /no (warranties|warranty|guarantee)/i], description: 'The other party provides no guarantees about their product/service.' },
+  { id: 'limitation_of_remedy', name: 'Limitation of Remedy', severity: 'medium', patterns: [/sole (and exclusive )?remedy/i, /exclusive remedy/i, /maximum (aggregate )?liability.{0,30}shall not exceed/i, /in no event.{0,20}(exceed|liable)/i], description: 'Your legal remedies may be severely limited.' },
+  { id: 'survival_clause', name: 'Broad Survival Clause', severity: 'low', patterns: [/shall survive (termination|expiration)/i, /survive(s)? the (termination|expiration)/i, /obligations.{0,30}survive/i], description: 'Some obligations continue even after the contract ends.' },
+  { id: 'personal_guarantee', name: 'Personal Guarantee', severity: 'high', patterns: [/personal(ly)? guarantee/i, /individual(ly)? liable/i, /jointly and severally/i, /personal liability/i], description: 'You\'re personally liable, not just your business.' },
+  { id: 'automatic_price_increase', name: 'Automatic Price Increase', severity: 'medium', patterns: [/price.{0,20}increase/i, /rate.{0,20}increase/i, /escalat(e|ion)/i, /cost of living adjustment/i, /CPI adjustment/i, /annual increase/i], description: 'Prices may increase automatically over time.' },
+  { id: 'no_cure_period', name: 'No Cure Period', severity: 'medium', patterns: [/immediate(ly)? terminat/i, /without.{0,20}(opportunity|right) to cure/i], description: 'No chance to fix a breach before the contract is terminated.' },
+  { id: 'venue_selection', name: 'Venue Selection Clause', severity: 'low', patterns: [/exclusive venue/i, /venue shall be/i, /brought (only )?in the courts/i], description: 'Lawsuits must be filed in a specific location.' },
+  { id: 'clawback', name: 'Clawback Provision', severity: 'high', patterns: [/clawback/i, /repay(ment)?.{0,30}(bonus|commission|payment)/i, /return.{0,30}(payment|compensation|bonus)/i, /refund.{0,30}(all|any) (payments|fees|amounts)/i], description: 'The other party can take back money already paid to you.' },
+  { id: 'moral_rights_waiver', name: 'Moral Rights Waiver', severity: 'medium', patterns: [/moral rights/i, /waive.{0,30}moral/i, /attribution/i], description: 'You waive the right to be credited for your work.' },
 ];
 
 // ========== DOCUMENT TYPE DETECTION ==========
@@ -153,7 +153,6 @@ function analyzeContract(text) {
         redFlags.push({
           id: flag.id, name: flag.name, severity: flag.severity,
           description: flag.description,
-          plainEnglish: flag.plainEnglish || '',
           context: (start > 0 ? '...' : '') + context + (end < text.length ? '...' : ''),
           match: match[0]
         });
@@ -167,7 +166,6 @@ function analyzeContract(text) {
     redFlags.push({
       id: 'severability_missing', name: 'Missing Severability Clause', severity: 'low',
       description: 'No severability clause found. If any part of this contract is found invalid, the entire contract could be voided.',
-      plainEnglish: 'This means if a court finds one part of this contract illegal, the entire contract could be thrown out — which might actually hurt you.',
       context: '', match: ''
     });
   }
@@ -675,7 +673,7 @@ app.get('/api/config', (req, res) => {
 });
 
 // Analyze
-app.post("/api/analyze", optionalAuth, (req, res) => { analytics.analyses++;
+app.post('/api/analyze', optionalAuth, (req, res) => {
   const { text } = req.body;
   if (!text || text.trim().length < 50) return res.status(400).json({ error: 'Contract text too short (minimum 50 characters).' });
   if (text.length > 100000) return res.status(400).json({ error: 'Contract text too long (max 100,000 characters).' });
@@ -711,7 +709,7 @@ app.post("/api/analyze", optionalAuth, (req, res) => { analytics.analyses++;
 });
 
 // Compare
-app.post("/api/compare", optionalAuth, (req, res) => { analytics.comparisons++;
+app.post('/api/compare', optionalAuth, (req, res) => {
   const { text1, text2 } = req.body;
   if (!text1 || !text2) return res.status(400).json({ error: 'Both contract texts are required.' });
   if (text1.trim().length < 50 || text2.trim().length < 50) return res.status(400).json({ error: 'Each contract must be at least 50 characters.' });
@@ -886,72 +884,10 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
   res.json({ text: text.trim() });
 });
 
-// ========== GLOSSARY ==========
-const GLOSSARY = [
-  { term: 'Indemnification', aka: 'Hold Harmless', definition: 'A promise to compensate someone for harm or loss. If you indemnify someone, you agree to pay their legal costs and damages if something goes wrong.', example: 'If a customer sues the company over your work, you\'d have to pay the company\'s legal bills.' },
-  { term: 'Force Majeure', aka: 'Act of God', definition: 'A clause that frees both parties from obligation when an extraordinary event occurs (war, pandemic, natural disaster). Often only protects one side.', example: 'If a hurricane destroys their office, they don\'t have to deliver your project on time.' },
-  { term: 'Severability', aka: 'Savings Clause', definition: 'If one part of the contract is found illegal or unenforceable, the rest of the contract still stands.', example: 'If a court strikes down the non-compete clause, the rest of your employment contract still applies.' },
-  { term: 'Arbitration', aka: 'Alternative Dispute Resolution', definition: 'A private process where a neutral third party (arbitrator) settles disputes instead of going to court. Usually binding and hard to appeal.', example: 'Instead of suing in court, you\'d present your case to a private arbitrator whose decision is final.' },
-  { term: 'Non-Compete', aka: 'Restrictive Covenant', definition: 'Prevents you from working for competitors or starting a competing business for a specified time period and geographic area after the contract ends.', example: 'After leaving, you can\'t work for any competitor within 50 miles for 2 years.' },
-  { term: 'Non-Solicitation', aka: 'Anti-Poaching', definition: 'Prevents you from recruiting employees or contacting clients of the other party after the relationship ends.', example: 'You can\'t hire your former coworkers or contact the company\'s clients for your new business.' },
-  { term: 'Non-Disparagement', aka: 'No Bad-Mouthing', definition: 'Prevents you from making negative public statements about the other party, their products, or their employees.', example: 'You can\'t post a negative review, warn others publicly, or criticize them on social media.' },
-  { term: 'Liquidated Damages', aka: 'Pre-Set Penalty', definition: 'A fixed amount of money agreed upon in advance that must be paid if the contract is breached, regardless of actual damages.', example: 'If you leave early, you owe $10,000 — even if they suffered no actual loss.' },
-  { term: 'Work Made for Hire', aka: 'IP Assignment', definition: 'Anything you create during the contract automatically belongs to the other party. You have no ownership rights.', example: 'The website you designed, the code you wrote — it all belongs to the client, not you.' },
-  { term: 'At-Will Employment', aka: 'Employment at Will', definition: 'Either party can end the employment relationship at any time, for any reason (or no reason), with no advance notice required.', example: 'Your employer can fire you tomorrow with no explanation and no severance pay.' },
-  { term: 'Liability Cap', aka: 'Limitation of Liability', definition: 'Sets a maximum amount one party can owe the other, regardless of actual damages. Often set very low.', example: 'Even if their software crashes and costs you $1M in lost business, the most you can recover is $500.' },
-  { term: 'Warranty Disclaimer', aka: 'As-Is Clause', definition: 'The product or service is provided with no guarantees. If it doesn\'t work as expected, you have no recourse.', example: '"As-is" means if the software has bugs or the apartment has problems, that\'s your problem.' },
-  { term: 'Auto-Renewal', aka: 'Evergreen Clause', definition: 'The contract automatically renews for another term unless you actively cancel before a deadline. Easy to miss.', example: 'Your 1-year subscription renews for another year if you don\'t cancel 90 days before it expires.' },
-  { term: 'Governing Law', aka: 'Choice of Law', definition: 'Determines which state\'s or country\'s laws apply to the contract and where legal disputes must be filed.', example: 'Even though you live in California, disputes must be handled under Delaware law in a Delaware court.' },
-  { term: 'Entire Agreement', aka: 'Merger Clause, Integration Clause', definition: 'States that this written contract is the complete agreement and overrides all previous discussions, emails, or verbal promises.', example: 'That raise they promised you in the interview? If it\'s not in this document, it doesn\'t count.' },
-  { term: 'Confidentiality', aka: 'NDA, Non-Disclosure', definition: 'Restricts what information you can share with others. Can range from reasonable (trade secrets) to overbroad (everything).', example: 'You can\'t tell anyone about projects you worked on, even in a job interview.' },
-  { term: 'Assignment', aka: 'Transfer of Rights', definition: 'Whether you can transfer your rights or obligations under the contract to someone else (like a new business partner).', example: 'If you sell your business, you can\'t transfer this client contract to the new owner without permission.' },
-  { term: 'Clawback', aka: 'Repayment Clause', definition: 'Allows the other party to reclaim money already paid to you under certain conditions.', example: 'If you quit within a year, you have to repay your entire signing bonus.' },
-  { term: 'Moral Rights', aka: 'Attribution Rights', definition: 'The right to be credited as the creator of your work and to prevent it from being modified in ways that harm your reputation.', example: 'Waiving moral rights means they can put someone else\'s name on your design work.' },
-  { term: 'Cure Period', aka: 'Right to Cure, Grace Period', definition: 'A specified time you have to fix a contract violation before the other party can terminate.', example: 'If you miss a deadline, you get 30 days to deliver before they can cancel the contract.' },
-  { term: 'Personal Guarantee', aka: 'Individual Liability', definition: 'Makes you personally responsible for the contract obligations, not just your business entity. Your personal assets are at risk.', example: 'If your LLC can\'t pay, they can go after your house, car, and savings.' },
-  { term: 'Survival Clause', aka: 'Post-Termination Obligations', definition: 'Specifies which contract terms continue to apply even after the contract ends.', example: 'The contract is over, but you still can\'t compete, share secrets, or disparage them for 2 more years.' },
-];
-
-app.get('/api/glossary', (req, res) => {
-  const q = req.query.q?.toLowerCase();
-  if (q) {
-    const filtered = GLOSSARY.filter(g => g.term.toLowerCase().includes(q) || g.aka.toLowerCase().includes(q) || g.definition.toLowerCase().includes(q));
-    return res.json(filtered);
-  }
-  res.json(GLOSSARY);
-});
-
-// ========== ANALYTICS ==========
-const analytics = { pageViews: new Map(), analyses: 0, comparisons: 0, signups: 0, startDate: new Date().toISOString() };
-
-app.use((req, res, next) => {
-  if (req.path.startsWith("/api/") || req.path.match(/\.(js|css|png|jpg|ico|svg|woff)$/)) return next();
-  const today = new Date().toISOString().slice(0, 10);
-  const key = today + ":" + req.path;
-  analytics.pageViews.set(key, (analytics.pageViews.get(key) || 0) + 1);
-  next();
-});
-
-app.get("/api/analytics", (req, res) => {
-  const views = {};
-  for (const [key, count] of analytics.pageViews) views[key] = count;
-  res.json({ startDate: analytics.startDate, totalAnalyses: analytics.analyses, totalComparisons: analytics.comparisons, totalSignups: analytics.signups, pageViews: views, totalUsers: users.size });
-});
-
-// Blog routes (static SEO pages)
-app.get('/blog', (req, res) => res.sendFile(path.join(__dirname, 'public', 'blog', 'index.html')));
-app.get('/blog/:slug', (req, res) => {
-  const slug = req.params.slug.replace(/[^a-z0-9-]/g, '');
-  const filePath = path.join(__dirname, 'public', 'blog', slug + '.html');
-  if (fs.existsSync(filePath)) return res.sendFile(filePath);
-  res.status(404).sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
 // SPA routes
 app.get('/share/:id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/compare', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/samples', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/account', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-app.get('/glossary', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 app.listen(PORT, () => console.log(`BriefPulse running on port ${PORT}`));
