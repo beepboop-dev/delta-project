@@ -360,45 +360,7 @@
     .clause-filter-btn { padding:0.4rem 0.8rem; border-radius:6px; border:1px solid var(--border); background:transparent; color:var(--text-dim); cursor:pointer; font-size:0.8rem; transition:all 0.2s; }
     .clause-filter-btn:hover, .clause-filter-btn.active { background:var(--primary); color:white; border-color:var(--primary); }
   
-  
-    /* Annotated view layout */
-    .annotated-layout { display:flex; gap:0; min-height:400px; }
-    .annotated-sidebar { width:260px; min-width:260px; border-right:1px solid var(--border); padding:0.75rem; overflow-y:auto; max-height:700px; position:sticky; top:0; background:var(--card); }
-    .annotated-main { flex:1; padding:1.25rem; overflow-y:auto; max-height:700px; }
-    .sidebar-title { font-size:0.8rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.75rem; padding-bottom:0.5rem; border-bottom:1px solid var(--border); }
-    .sidebar-item { padding:0.5rem 0.6rem; margin-bottom:0.4rem; border-radius:6px; cursor:pointer; font-size:0.8rem; transition:all 0.15s; border-left:3px solid transparent; }
-    .sidebar-item:hover { background:rgba(124,92,252,0.1); }
-    .sidebar-item.active { background:rgba(124,92,252,0.15); border-left-color:var(--primary); }
-    .sidebar-item.risk-red { border-left-color:#ef4444; }
-    .sidebar-item.risk-yellow { border-left-color:#f59e0b; }
-    .sidebar-item.risk-green { border-left-color:#10b981; }
-    .sidebar-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:0.4rem; }
-    .sidebar-dot.red { background:#ef4444; }
-    .sidebar-dot.yellow { background:#f59e0b; }
-    .sidebar-dot.green { background:#10b981; }
-    .sidebar-item-title { font-weight:600; color:var(--text); }
-    .sidebar-item-labels { margin-top:0.2rem; color:var(--text-dim); font-size:0.75rem; }
-    
-    .clause-text .highlight-red { background:rgba(239,68,68,0.2); border-bottom:2px solid #ef4444; padding:0 2px; border-radius:2px; cursor:pointer; position:relative; }
-    .clause-text .highlight-yellow { background:rgba(245,158,11,0.15); border-bottom:2px solid #f59e0b; padding:0 2px; border-radius:2px; cursor:pointer; }
-    .clause-text .highlight-blue { background:rgba(59,130,246,0.15); border-bottom:2px solid #3b82f6; padding:0 2px; border-radius:2px; cursor:pointer; }
-    .clause-text .highlight-green { background:rgba(16,185,129,0.1); padding:0 2px; border-radius:2px; }
-    
-    .clause-item.flash { animation:clauseFlash 1.5s ease; }
-    @keyframes clauseFlash { 0%{box-shadow:0 0 0 3px rgba(124,92,252,0.5)} 100%{box-shadow:none} }
-    
-    .annotation-badge { display:inline-flex; align-items:center; gap:0.3rem; padding:0.15rem 0.5rem; border-radius:10px; font-size:0.7rem; font-weight:600; }
-    .annotation-badge.red { background:rgba(239,68,68,0.15); color:#ef4444; }
-    .annotation-badge.yellow { background:rgba(245,158,11,0.15); color:#f59e0b; }
-    .annotation-badge.green { background:rgba(16,185,129,0.15); color:#10b981; }
-    
-    @media (max-width:768px) {
-      .annotated-layout { flex-direction:column; }
-      .annotated-sidebar { width:100%; min-width:100%; max-height:200px; border-right:none; border-bottom:1px solid var(--border); }
-      .annotated-main { max-height:none; }
-    }
-
-    </style>
+  </style>
 </head>
 <body>
   <div class="container">
@@ -411,7 +373,6 @@
         <a href="#" onclick="showPage('compare'); return false;">Compare</a>
         <a href="#" onclick="showPage('samples'); return false;">Samples</a>
         <a href="#" onclick="showPage('glossary'); return false;">Glossary</a>
-        <a href="#" onclick="showPage('templates'); return false;">Templates</a>
         <a href="#" onclick="scrollToPricing(); return false;">Pricing</a>
         <div id="auth-nav">
           <button class="nav-btn" onclick="showAuthModal('login')">Log In</button>
@@ -540,18 +501,6 @@
         <div id="tab-negotiation" class="card hidden fade-in">
           <div id="negotiation-content"></div>
         </div>
-        <div id="tab-annotated" class="card hidden fade-in" style="padding:0;overflow:visible">
-          <div style="padding:1.25rem 1.25rem 0">
-            <div id="clause-stats" class="clause-stats"></div>
-          </div>
-          <div class="annotated-layout">
-            <div class="annotated-sidebar" id="annotation-sidebar">
-              <div class="sidebar-title">📍 Annotation Map</div>
-              <div id="sidebar-items"></div>
-            </div>
-            <div class="annotated-main" id="annotated-clauses"></div>
-          </div>
-        </div>
       </div>
 
       <!-- Live Demo -->
@@ -560,6 +509,11 @@
         <p class="section-sub">Here's what BriefPulse finds in a typical freelance agreement</p>
         <div class="demo-section" id="demo-output"></div>
       </div>
+
+      <div id="tab-annotated" class="card hidden fade-in">
+          <div id="clause-stats" class="clause-stats"></div>
+          <div id="annotated-clauses"></div>
+        </div>
 
         <!-- Testimonials -->
       <hr class="divider">
@@ -771,29 +725,6 @@
       <div id="glossary-list"></div>
     </div>
 
-    <div id="page-templates" class="hidden">
-      <h2 style="font-size:1.8rem;font-weight:800;margin-bottom:0.5rem;">📄 Contract Template Library</h2>
-      <p style="color:var(--text-muted);margin-bottom:1.5rem;">Pre-built contract templates with placeholder fields. Preview, customize, and analyze any template instantly.</p>
-      
-      <div style="display:flex;gap:0.75rem;margin-bottom:1.5rem;flex-wrap:wrap;">
-        <input type="text" id="template-search" placeholder="Search templates..." style="flex:1;min-width:200px;" oninput="filterTemplates()">
-        <select id="template-category-filter" style="padding:0.75rem 1rem;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;" onchange="filterTemplates()">
-          <option value="">All Categories</option>
-        </select>
-      </div>
-      
-      <div id="templates-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;"></div>
-    </div>
-
-    <!-- Template Preview Modal -->
-    <div id="template-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:1000;overflow-y:auto;padding:2rem;">
-      <div style="max-width:800px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem;position:relative;">
-        <button onclick="closeTemplateModal()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;">&times;</button>
-        <div id="template-modal-content"></div>
-      </div>
-    </div>
-
-
     <!-- ACCOUNT PAGE -->
     <div id="page-account" class="hidden">
       <div class="section-title">Your Account</div>
@@ -906,7 +837,6 @@
       }
       if (page === 'account' && currentUser) loadAccount();
       if (page === 'glossary') loadGlossary();
-      if (page === 'templates') loadTemplates();
       window.scrollTo(0, 0);
     }
 
@@ -1047,74 +977,6 @@
     }
 
 
-    function highlightClauseText(text, annotations) {
-      // Build list of patterns to highlight from annotations
-      const highlights = [];
-      const HIGHLIGHT_PATTERNS = {
-        'Unlimited Liability': [/unlimited liability/gi, /shall be liable for all/gi, /liability shall not be (limited|capped)/gi],
-        'Rights Waiver': [/waives? (any |all )?rights?/gi, /surrenders? (any |all )?rights?/gi, /relinquish/gi, /forfeits? (any |all )?rights?/gi],
-        'Unilateral Modification': [/may (modify|change|alter|amend|update) (this|the) (agreement|contract|terms)/gi, /reserves? the right to (modify|change|alter|amend)/gi],
-        'Sole Discretion': [/at (its|our|their) sole discretion/gi],
-        'No Notice Required': [/without (prior )?notice/gi],
-        'Auto-Renewal': [/auto(matically)?[- ]?renew(s|al)?/gi, /shall (automatically )?renew/gi],
-        'Non-Compete': [/non[- ]?compete/gi, /shall not (compete|engage in)/gi, /covenant not to compete/gi, /restrictive covenant/gi],
-        'Non-Solicitation': [/non[- ]?solicit(ation)?/gi, /shall not (solicit|recruit|hire)/gi],
-        'Mandatory Arbitration': [/binding arbitration/gi, /mandatory arbitration/gi, /shall be (resolved|settled) (by|through) arbitration/gi],
-        'Trial/Class Action Waiver': [/waive.{0,20}(right to|jury) trial/gi, /class action waiver/gi],
-        'Indemnification': [/indemnif(y|ies|ication)/gi, /hold harmless/gi, /defend and indemnify/gi],
-        'Termination Rights': [/terminat(e|ion) (without|for no) cause/gi, /terminat(e|ion) at (any time|will|its sole)/gi, /immediately terminat/gi],
-        'Penalty Clause': [/liquidated damages/gi, /penalty (of|for|clause)/gi, /early termination fee/gi],
-        'IP Assignment': [/works? (made )?for hire/gi, /hereby assign/gi, /assign(s|ment)?.{0,20}(intellectual property|IP|copyright)/gi],
-        'Non-Disparagement': [/non[- ]?disparagement/gi, /shall not (make|publish).{0,20}(negative|disparaging)/gi],
-        'Exclusivity/Moonlighting Restriction': [/devote.{0,15}(full|entire|exclusive).{0,15}(time|attention|effort)/gi, /exclusiv(e|ity) (of service|engagement)/gi],
-        'Broad Confidentiality': [/in perpetuity/gi, /perpetual(ly)? confidential/gi],
-        'Personal Guarantee': [/personal(ly)? guarantee/gi, /jointly and severally/gi],
-        'Data/Content Rights': [/irrevocable.{0,15}license/gi, /perpetual.{0,15}license/gi, /royalty[- ]?free.{0,15}license/gi],
-        'Warranty Disclaimer': [/as[- ]?is/gi, /without warranty/gi, /disclaims? (all |any )?warrant/gi],
-        'Clawback': [/clawback/gi, /repay(ment)?.{0,20}(bonus|commission|payment)/gi],
-        'Moral Rights Waiver': [/moral rights/gi, /waive.{0,20}moral/gi],
-      };
-      
-      // Determine risk color for each annotation label
-      const riskByLabel = {};
-      annotations.forEach(a => { riskByLabel[a.label] = a.risk; });
-      
-      // Find all matches
-      const matches = [];
-      for (const a of annotations) {
-        const patterns = HIGHLIGHT_PATTERNS[a.label] || [];
-        for (const p of patterns) {
-          const regex = new RegExp(p.source, p.flags);
-          let m;
-          while ((m = regex.exec(text)) !== null) {
-            matches.push({ start: m.index, end: m.index + m[0].length, risk: a.risk, label: a.label });
-          }
-        }
-      }
-      
-      // Sort by position, remove overlaps
-      matches.sort((a, b) => a.start - b.start);
-      const filtered = [];
-      let lastEnd = -1;
-      for (const m of matches) {
-        if (m.start >= lastEnd) { filtered.push(m); lastEnd = m.end; }
-      }
-      
-      // Build highlighted HTML
-      if (filtered.length === 0) return escHtml(text);
-      
-      let result = '';
-      let pos = 0;
-      for (const m of filtered) {
-        result += escHtml(text.slice(pos, m.start));
-        const colorClass = m.risk === 'red' ? 'highlight-red' : m.risk === 'yellow' ? 'highlight-yellow' : 'highlight-blue';
-        result += `<span class="${colorClass}" title="${escHtml(m.label)}">${escHtml(text.slice(m.start, m.end))}</span>`;
-        pos = m.end;
-      }
-      result += escHtml(text.slice(pos));
-      return result;
-    }
-
     function displayAnnotatedView(clauseData) {
       if (!clauseData) return;
       const stats = clauseData.stats;
@@ -1128,92 +990,47 @@
         <div style="color:var(--text-dim);display:flex;align-items:center;font-size:0.85rem">${stats.total} clauses analyzed</div>
       `;
       
-      // Build sidebar items
-      let sidebarHtml = '';
-      const flaggedClauses = clauses.filter(c => c.risk !== 'green');
-      if (flaggedClauses.length === 0) {
-        sidebarHtml = '<div style="color:var(--text-dim);font-size:0.85rem;padding:0.5rem">✅ No flagged clauses</div>';
-      } else {
-        clauses.forEach((c, i) => {
-          if (c.annotations.length === 0) return;
-          const labels = c.annotations.map(a => a.label).join(', ');
-          sidebarHtml += `<div class="sidebar-item risk-${c.risk}" onclick="scrollToClause(${i})">
-            <div class="sidebar-item-title"><span class="sidebar-dot ${c.risk}"></span>${escHtml(c.title.length > 30 ? c.title.slice(0,28)+'...' : c.title)}</div>
-            <div class="sidebar-item-labels">${c.annotations.map(a => `<span class="annotation-badge ${a.risk}">${a.label}</span>`).join(' ')}</div>
-          </div>`;
-        });
-      }
-      document.getElementById('sidebar-items').innerHTML = sidebarHtml;
-      
       // Filter bar + clauses
       let html = `<div class="clause-filter-bar">
         <button class="clause-filter-btn active" onclick="filterClauses('all',this)">All (${stats.total})</button>
-        <button class="clause-filter-btn" onclick="filterClauses('red',this)">🔴 Critical (${stats.danger})</button>
-        <button class="clause-filter-btn" onclick="filterClauses('yellow',this)">🟡 Warning (${stats.caution})</button>
+        <button class="clause-filter-btn" onclick="filterClauses('red',this)">🔴 Danger (${stats.danger})</button>
+        <button class="clause-filter-btn" onclick="filterClauses('yellow',this)">🟡 Caution (${stats.caution})</button>
         <button class="clause-filter-btn" onclick="filterClauses('green',this)">🟢 Safe (${stats.safe})</button>
       </div>`;
       
       clauses.forEach((c, i) => {
         const expanded = c.risk === 'red' ? ' expanded' : '';
-        const riskWord = c.risk === 'red' ? 'Critical' : c.risk === 'yellow' ? 'Warning' : 'Safe';
+        const riskWord = c.risk === 'red' ? 'Danger' : c.risk === 'yellow' ? 'Caution' : 'Safe';
         let annotationsHtml = '';
         
         if (c.annotations.length > 0) {
           c.annotations.forEach(a => {
             annotationsHtml += `<div class="clause-annotation ${a.risk}">
-              <div class="annotation-label ${a.risk}">${a.risk === 'red' ? '🔴' : a.risk === 'yellow' ? '🟡' : 'ℹ️'} ${a.label}</div>
+              <div class="annotation-label ${a.risk}">${a.risk === 'red' ? '🔴' : a.risk === 'yellow' ? '🟡' : '🟢'} ${a.label}</div>
               <div class="annotation-detail"><strong>What it means:</strong> ${a.explanation}</div>
               <div class="annotation-detail"><strong>Watch out:</strong> ${a.concern}</div>
-              ${a.alternative ? `<div class="annotation-alternative">💡 ${a.alternative}</div>` : ''}
+              ${a.alternative ? `<div class="annotation-alternative">${a.alternative}</div>` : ''}
             </div>`;
           });
         } else {
           annotationsHtml = '<div class="annotation-detail" style="color:#10b981;padding:0.5rem 0">✅ No specific concerns identified in this clause.</div>';
         }
         
-        const highlightedText = highlightClauseText(c.text, c.annotations);
-        
-        html += `<div class="clause-item risk-${c.risk}${expanded}" data-risk="${c.risk}" id="clause-${i}">
+        html += `<div class="clause-item risk-${c.risk}${expanded}" data-risk="${c.risk}">
           <div class="clause-header" onclick="this.parentElement.classList.toggle('expanded')">
             <div class="clause-risk-dot ${c.risk}"></div>
             <div class="clause-title">${escHtml(c.title)}</div>
-            ${c.annotations.length > 0 ? `<span style="font-size:0.75rem;color:var(--text-dim)">${c.annotations.length} note${c.annotations.length>1?'s':''}</span>` : ''}
             <span class="clause-risk-label ${c.risk}">${riskWord}</span>
             <span class="clause-chevron">▼</span>
           </div>
           <div class="clause-body">
-            <div class="clause-text">${highlightedText}</div>
+            <div class="clause-text">${escHtml(c.text)}</div>
             ${annotationsHtml}
           </div>
         </div>`;
       });
       
       document.getElementById('annotated-clauses').innerHTML = html;
-    }
-    
-    function scrollToClause(index) {
-      const el = document.getElementById('clause-' + index);
-      if (!el) return;
-      // Expand it
-      if (!el.classList.contains('expanded')) el.classList.add('expanded');
-      // Scroll into view within the main panel
-      const main = document.querySelector('.annotated-main');
-      if (main) {
-        main.scrollTo({ top: el.offsetTop - main.offsetTop - 10, behavior: 'smooth' });
-      } else {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-      // Flash effect
-      el.classList.remove('flash');
-      void el.offsetWidth;
-      el.classList.add('flash');
-      // Highlight sidebar item
-      document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
-      const sidebarItems = document.querySelectorAll('.sidebar-item');
-      // Find matching sidebar item
-      sidebarItems.forEach(s => {
-        if (s.onclick && s.onclick.toString().includes(index)) s.classList.add('active');
-      });
     }
     
     function filterClauses(risk, btn) {
@@ -2028,171 +1845,6 @@
 
     // ========== START ==========
     init();
-  
-    // ========== TEMPLATES ==========
-    let allTemplates = [];
-    let templateCategories = [];
-    
-    async function loadTemplates() {
-      try {
-        const res = await fetch('/api/templates');
-        const data = await res.json();
-        allTemplates = data.templates;
-        templateCategories = data.categories;
-        
-        const sel = document.getElementById('template-category-filter');
-        sel.innerHTML = '<option value="">All Categories</option>' + templateCategories.map(c => '<option value="'+c+'">'+c+'</option>').join('');
-        
-        renderTemplates(allTemplates);
-      } catch(e) { console.error('Failed to load templates', e); }
-    }
-    
-    function filterTemplates() {
-      const search = document.getElementById('template-search').value.toLowerCase();
-      const cat = document.getElementById('template-category-filter').value;
-      let filtered = allTemplates;
-      if (search) filtered = filtered.filter(t => t.title.toLowerCase().includes(search) || t.description.toLowerCase().includes(search));
-      if (cat) filtered = filtered.filter(t => t.category === cat);
-      renderTemplates(filtered);
-    }
-    
-    function renderTemplates(templates) {
-      const grid = document.getElementById('templates-grid');
-      if (!templates.length) { grid.innerHTML = '<p style="color:var(--text-muted);grid-column:1/-1;text-align:center;padding:2rem;">No templates found.</p>'; return; }
-      grid.innerHTML = templates.map(t => {
-        const riskColors = { low: 'var(--green)', medium: 'var(--orange)', high: 'var(--red)' };
-        const riskLabels = { low: 'Low Risk', medium: 'Medium Risk', high: 'High Risk' };
-        return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor=\'var(--accent)\';this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.transform=\'none\'" onclick="openTemplate(\''+t.id+'\')">' +
-          '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.75rem;">' +
-            '<span style="font-size:0.75rem;padding:0.2rem 0.6rem;border-radius:100px;background:var(--surface2);color:var(--text-muted);">'+t.category+'</span>' +
-            '<span style="font-size:0.75rem;padding:0.2rem 0.6rem;border-radius:100px;color:white;background:'+riskColors[t.riskLevel]+';">'+riskLabels[t.riskLevel]+'</span>' +
-          '</div>' +
-          '<h3 style="font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;">'+t.title+'</h3>' +
-          '<p style="color:var(--text-muted);font-size:0.85rem;line-height:1.5;margin-bottom:0.75rem;">'+t.description+'</p>' +
-          '<div style="display:flex;gap:1rem;font-size:0.8rem;color:var(--text-dim);">' +
-            '<span>📝 '+t.wordCount+' words</span>' +
-            '<span>🔤 '+t.placeholderCount+' fields</span>' +
-            '<span>⚠️ '+t.commonRedFlags.length+' watch items</span>' +
-          '</div>' +
-        '</div>';
-      }).join('');
-    }
-    
-    async function openTemplate(id) {
-      try {
-        const res = await fetch('/api/templates/' + id);
-        const t = await res.json();
-        const riskColors = { low: 'var(--green)', medium: 'var(--orange)', high: 'var(--red)' };
-        const riskLabels = { low: 'Low Risk', medium: 'Medium Risk', high: 'High Risk' };
-        
-        document.getElementById('template-modal-content').innerHTML =
-          '<div style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap;">' +
-            '<span style="font-size:0.8rem;padding:0.25rem 0.75rem;border-radius:100px;background:var(--surface2);color:var(--text-muted);">'+t.category+'</span>' +
-            '<span style="font-size:0.8rem;padding:0.25rem 0.75rem;border-radius:100px;color:white;background:'+riskColors[t.riskLevel]+';">'+riskLabels[t.riskLevel]+'</span>' +
-            '<span style="font-size:0.8rem;color:var(--text-dim);">📝 '+t.wordCount+' words</span>' +
-            '<span style="font-size:0.8rem;color:var(--text-dim);">🔤 '+t.placeholders.length+' placeholders</span>' +
-          '</div>' +
-          '<h2 style="font-size:1.5rem;font-weight:800;margin-bottom:0.75rem;">'+t.title+'</h2>' +
-          '<p style="color:var(--text-muted);margin-bottom:1rem;">'+t.description+'</p>' +
-          
-          (t.commonRedFlags.length ? '<div style="margin-bottom:1.5rem;"><h3 style="font-size:0.9rem;font-weight:700;margin-bottom:0.5rem;color:var(--orange);">⚠️ Common Red Flags to Watch For</h3>' +
-            '<div style="display:flex;flex-wrap:wrap;gap:0.5rem;">' + t.commonRedFlags.map(f => '<span style="font-size:0.8rem;padding:0.3rem 0.7rem;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;color:var(--orange);">'+f+'</span>').join('') + '</div></div>' : '') +
-          
-          '<div style="margin-bottom:1.5rem;">' +
-            '<h3 style="font-size:0.9rem;font-weight:700;margin-bottom:0.5rem;">📋 Contract Text</h3>' +
-            '<pre style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:1.25rem;font-size:0.85rem;line-height:1.6;white-space:pre-wrap;word-wrap:break-word;max-height:400px;overflow-y:auto;color:var(--text);">' + t.text.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\[([A-Z][A-Z_ ,\/.()]+)\]/g, '<span style="background:rgba(124,92,252,0.2);color:var(--accent);padding:0.1rem 0.3rem;border-radius:4px;">[$1]</span>') + '</pre>' +
-          '</div>' +
-          
-          '<div style="display:flex;gap:0.75rem;flex-wrap:wrap;">' +
-            '<button class="btn btn-primary" onclick="analyzeTemplate(\''+t.id+'\')">🔍 Analyze This Template</button>' +
-            '<button class="btn btn-secondary" onclick="downloadTemplatePDF(\''+t.id+'\')">📥 Download as PDF</button>' +
-            '<button class="btn btn-secondary" onclick="copyTemplateText(\''+t.id+'\')">📋 Copy Text</button>' +
-            '<button class="btn btn-secondary" onclick="useTemplateInAnalyzer(\''+t.id+'\')">✏️ Edit & Analyze</button>' +
-          '</div>';
-        
-        document.getElementById('template-modal').style.display = 'block';
-        document.body.style.overflow = 'hidden';
-        window._currentTemplate = t;
-      } catch(e) { alert('Failed to load template'); }
-    }
-    
-    function closeTemplateModal() {
-      document.getElementById('template-modal').style.display = 'none';
-      document.body.style.overflow = '';
-    }
-    
-    async function analyzeTemplate(id) {
-      closeTemplateModal();
-      showPage('home');
-      const heroEl = document.getElementById('hero-section');
-      if (heroEl) heroEl.classList.add('hidden');
-      
-      const btn = document.getElementById('analyze-btn');
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span> Analyzing template...';
-      document.getElementById('results-section').classList.add('hidden');
-      
-      try {
-        const res = await fetch('/api/templates/' + id + '/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...(typeof authToken !== 'undefined' && authToken ? { Authorization: 'Bearer ' + authToken } : {}) },
-          body: JSON.stringify({ values: {} })
-        });
-        const data = await res.json();
-        if (!res.ok) { alert(data.error || 'Analysis failed'); return; }
-        renderResults(data);
-      } catch(e) { alert('Analysis failed: ' + e.message); }
-      finally { btn.disabled = false; btn.textContent = '🔍 Analyze Contract'; }
-    }
-    
-    function downloadTemplatePDF(id) {
-      const t = window._currentTemplate;
-      if (!t) return;
-      const html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+t.title+' — BriefPulse Template</title>' +
-        '<style>body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:800px;margin:0 auto;padding:40px;line-height:1.6;color:#1a1a2e;}' +
-        'h1{color:#7c5cfc;border-bottom:3px solid #7c5cfc;padding-bottom:10px;}' +
-        '.meta{color:#6b7280;font-size:13px;margin-bottom:20px;}' +
-        '.placeholder{background:#f3e8ff;color:#7c5cfc;padding:2px 6px;border-radius:4px;font-weight:600;}' +
-        '.flags{margin:20px 0;padding:15px;background:#fffbeb;border-left:4px solid #f59e0b;border-radius:4px;}' +
-        '.footer{margin-top:40px;padding-top:20px;border-top:1px solid #e5e7eb;color:#9ca3af;font-size:12px;text-align:center;}' +
-        'pre{white-space:pre-wrap;word-wrap:break-word;background:#f9fafb;padding:20px;border-radius:8px;font-size:14px;line-height:1.8;}' +
-        '@media print{body{padding:20px;}}</style></head><body>' +
-        '<h1>'+t.title+'</h1>' +
-        '<p class="meta">Category: '+t.category+' | Risk Level: '+t.riskLevel.toUpperCase()+' | '+t.wordCount+' words | '+t.placeholders.length+' placeholders</p>' +
-        '<p>'+t.description+'</p>' +
-        (t.commonRedFlags.length ? '<div class="flags"><strong>⚠️ Common Red Flags:</strong><ul>'+t.commonRedFlags.map(f=>'<li>'+f+'</li>').join('')+'</ul></div>' : '') +
-        '<h2>Contract Text</h2><pre>'+t.text.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\[([A-Z][A-Z_ ,\/.()]+)\]/g,'<span class="placeholder">[$1]</span>')+'</pre>' +
-        '<div class="footer">Generated by BriefPulse — https://delta.abapture.ai<br>This is a template for informational purposes only and does not constitute legal advice.</div>' +
-        '</body></html>';
-      const blob = new Blob([html], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = t.id + '-template.html';
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-    
-    function copyTemplateText(id) {
-      const t = window._currentTemplate;
-      if (!t) return;
-      navigator.clipboard.writeText(t.text).then(() => {
-        const btn = event.target;
-        const orig = btn.textContent;
-        btn.textContent = '✅ Copied!';
-        setTimeout(() => btn.textContent = orig, 2000);
-      });
-    }
-    
-    function useTemplateInAnalyzer(id) {
-      const t = window._currentTemplate;
-      if (!t) return;
-      closeTemplateModal();
-      showPage('home');
-      document.getElementById('contract-text').value = t.text;
-      document.getElementById('contract-text').scrollIntoView({ behavior: 'smooth' });
-    }
-
-    </script>
+  </script>
 </body>
 </html>
