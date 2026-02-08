@@ -287,6 +287,36 @@
     .bulk-detail-body { display:none; margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border); }
     .bulk-detail-body.open { display:block; }
   
+
+    /* Negotiation Playbook */
+    .neg-priority-group { margin-bottom:2rem; }
+    .neg-priority-header { display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem; padding-bottom:0.5rem; border-bottom:2px solid var(--border); }
+    .neg-priority-badge { padding:0.3rem 0.8rem; border-radius:100px; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; }
+    .neg-priority-badge.must-negotiate { background:rgba(239,68,68,0.2); color:var(--red); }
+    .neg-priority-badge.should-negotiate { background:rgba(245,158,11,0.2); color:var(--orange); }
+    .neg-priority-badge.nice-to-have { background:rgba(59,130,246,0.2); color:var(--blue); }
+    .neg-item { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:1.25rem; margin-bottom:1rem; transition:all 0.2s; }
+    .neg-item:hover { border-color:var(--accent); }
+    .neg-item-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; }
+    .neg-item-title { font-weight:700; font-size:1rem; }
+    .neg-section { margin-bottom:0.75rem; }
+    .neg-section-label { font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-dim); margin-bottom:0.3rem; }
+    .neg-clause-text { background:var(--surface); padding:0.6rem 0.8rem; border-radius:6px; font-size:0.85rem; color:var(--text-dim); font-style:italic; border-left:3px solid var(--red); }
+    .neg-risk-text { font-size:0.9rem; color:var(--text-muted); line-height:1.5; }
+    .neg-suggested { background:rgba(34,197,94,0.08); border:1px dashed rgba(34,197,94,0.3); padding:0.6rem 0.8rem; border-radius:6px; font-size:0.88rem; color:var(--green); line-height:1.5; }
+    .neg-suggested::before { content:'✏️ '; }
+    .neg-tip { background:rgba(124,92,252,0.08); border:1px solid rgba(124,92,252,0.2); border-radius:6px; padding:0.6rem 0.8rem; font-size:0.88rem; color:var(--text); line-height:1.5; }
+    .neg-tip::before { content:'💡 '; }
+    .neg-leverage { list-style:none; padding:0; }
+    .neg-leverage li { padding:0.3rem 0; font-size:0.85rem; color:var(--text-muted); }
+    .neg-leverage li::before { content:'🎯 '; }
+    .neg-copy-bar { display:flex; gap:0.75rem; margin-bottom:1.5rem; flex-wrap:wrap; }
+    .neg-stats { display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; }
+    .neg-stat { padding:0.6rem 1.2rem; border-radius:8px; font-weight:600; font-size:0.9rem; display:flex; align-items:center; gap:0.5rem; }
+    .neg-stat.must { background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3); }
+    .neg-stat.should { background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.3); }
+    .neg-stat.nice { background:rgba(59,130,246,0.15); color:#3b82f6; border:1px solid rgba(59,130,246,0.3); }
+
     /* Clause Annotation Styles */
     .clause-stats { display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; }
     .clause-stat { padding:0.6rem 1.2rem; border-radius:8px; font-weight:600; font-size:0.9rem; display:flex; align-items:center; gap:0.5rem; }
@@ -447,6 +477,7 @@
           <button class="tab" onclick="showResultTab('recs')">💡 Recommendations</button>
           <button class="tab" onclick="showResultTab('terms')">📊 Key Terms</button>
           <button class="tab" onclick="showResultTab('obligations')">📜 Obligations</button>
+          <button class="tab" onclick="showResultTab('negotiation')">🤝 Negotiation Playbook</button>
           <button class="tab" onclick="showResultTab('annotated')">📄 Annotated View</button>
         </div>
 
@@ -466,6 +497,9 @@
         </div>
         <div id="tab-obligations" class="card hidden fade-in">
           <div id="obligations-list"></div>
+        </div>
+        <div id="tab-negotiation" class="card hidden fade-in">
+          <div id="negotiation-content"></div>
         </div>
       </div>
 
@@ -937,6 +971,7 @@
 
       // Display annotated view
       if (data.clauseAnnotations) displayAnnotatedView(data.clauseAnnotations);
+      if (data.negotiationPlaybook) displayNegotiationPlaybook(data.negotiationPlaybook);
 
       rs.scrollIntoView({ behavior: 'smooth' });
     }
@@ -1631,6 +1666,181 @@
       document.getElementById('bulk-dashboard').classList.add('hidden');
       document.getElementById('bulk-queue').classList.add('hidden');
       renderBulkQueue();
+    }
+
+
+    // ========== NEGOTIATION PLAYBOOK ==========
+    function displayNegotiationPlaybook(playbook) {
+      if (!playbook || !playbook.suggestions.length) {
+        document.getElementById('negotiation-content').innerHTML = '<p style="color:var(--green);font-size:1rem">✅ No negotiation points needed — this contract looks fair!</p>';
+        return;
+      }
+
+      const s = playbook.summary;
+      let html = '';
+
+      // Copy button bar
+      html += '<div class="neg-copy-bar">';
+      html += '<button class="btn btn-primary btn-sm" onclick="copyNegotiationEmail()">✉️ Copy negotiation points as email draft</button>';
+      html += '<button class="btn btn-secondary btn-sm" onclick="copyNegotiationBullets()">📋 Copy as bullet points</button>';
+      html += '</div>';
+
+      // Stats
+      html += '<div class="neg-stats">';
+      if (s.mustNegotiate > 0) html += '<div class="neg-stat must">🔴 ' + s.mustNegotiate + ' Must-Negotiate</div>';
+      if (s.shouldNegotiate > 0) html += '<div class="neg-stat should">🟡 ' + s.shouldNegotiate + ' Should-Negotiate</div>';
+      if (s.niceToHave > 0) html += '<div class="neg-stat nice">🔵 ' + s.niceToHave + ' Nice-to-Have</div>';
+      html += '</div>';
+
+      // Group by priority
+      const groups = {
+        'must-negotiate': { label: '🔴 Must-Negotiate', desc: 'These issues pose significant risk and should be addressed before signing.', items: [] },
+        'should-negotiate': { label: '🟡 Should-Negotiate', desc: 'Important items that would strengthen your position.', items: [] },
+        'nice-to-have': { label: '🔵 Nice-to-Have', desc: 'Lower priority but worth raising if the negotiation is going well.', items: [] }
+      };
+
+      playbook.suggestions.forEach(item => {
+        if (groups[item.priority]) groups[item.priority].items.push(item);
+      });
+
+      for (const [priority, group] of Object.entries(groups)) {
+        if (group.items.length === 0) continue;
+        html += '<div class="neg-priority-group">';
+        html += '<div class="neg-priority-header">';
+        html += '<span class="neg-priority-badge ' + priority + '">' + group.label + '</span>';
+        html += '<span style="color:var(--text-dim);font-size:0.85rem">' + group.desc + '</span>';
+        html += '</div>';
+
+        group.items.forEach(item => {
+          html += '<div class="neg-item">';
+          html += '<div class="neg-item-header">';
+          html += '<span class="neg-item-title">' + escHtml(item.flagName) + '</span>';
+          html += '<span class="flag-severity ' + item.severity + '">' + item.severity + '</span>';
+          html += '</div>';
+
+          if (item.problematicClause) {
+            html += '<div class="neg-section"><div class="neg-section-label">Problematic Clause</div>';
+            html += '<div class="neg-clause-text">"' + escHtml(item.problematicClause) + '"</div></div>';
+          }
+
+          html += '<div class="neg-section"><div class="neg-section-label">Why It\'s Risky</div>';
+          html += '<div class="neg-risk-text">' + escHtml(item.whyRisky) + '</div></div>';
+
+          if (item.suggestedLanguage) {
+            html += '<div class="neg-section"><div class="neg-section-label">Suggested Alternative Language</div>';
+            html += '<div class="neg-suggested">' + escHtml(item.suggestedLanguage) + '</div></div>';
+          }
+
+          html += '<div class="neg-section"><div class="neg-section-label">Negotiation Tip</div>';
+          html += '<div class="neg-tip">' + escHtml(item.negotiationTip) + '</div></div>';
+
+          if (item.leveragePoints && item.leveragePoints.length) {
+            html += '<div class="neg-section"><div class="neg-section-label">Leverage Points</div>';
+            html += '<ul class="neg-leverage">';
+            item.leveragePoints.forEach(lp => {
+              html += '<li>' + escHtml(lp) + '</li>';
+            });
+            html += '</ul></div>';
+          }
+
+          html += '</div>'; // neg-item
+        });
+
+        html += '</div>'; // neg-priority-group
+      }
+
+      document.getElementById('negotiation-content').innerHTML = html;
+    }
+
+    function copyNegotiationEmail() {
+      if (!currentAnalysis || !currentAnalysis.negotiationPlaybook) return;
+      const pb = currentAnalysis.negotiationPlaybook;
+      const docType = currentAnalysis.documentType?.label || 'the contract';
+
+      let email = 'Subject: Requested Amendments to ' + docType + '\n\n';
+      email += 'Dear [Counterparty Name],\n\n';
+      email += 'Thank you for sending over ' + docType.toLowerCase() + ' for review. After careful consideration, I would like to discuss the following points before we proceed:\n\n';
+
+      let num = 1;
+      const mustItems = pb.suggestions.filter(s => s.priority === 'must-negotiate');
+      const shouldItems = pb.suggestions.filter(s => s.priority === 'should-negotiate');
+      const niceItems = pb.suggestions.filter(s => s.priority === 'nice-to-have');
+
+      if (mustItems.length > 0) {
+        email += '--- CRITICAL ITEMS (Must Address) ---\n\n';
+        mustItems.forEach(item => {
+          email += num + '. ' + item.flagName + '\n';
+          email += '   Current concern: ' + item.whyRisky + '\n';
+          if (item.suggestedLanguage) {
+            email += '   Proposed revision: ' + item.suggestedLanguage + '\n';
+          }
+          email += '\n';
+          num++;
+        });
+      }
+
+      if (shouldItems.length > 0) {
+        email += '--- IMPORTANT ITEMS ---\n\n';
+        shouldItems.forEach(item => {
+          email += num + '. ' + item.flagName + '\n';
+          email += '   Current concern: ' + item.whyRisky + '\n';
+          if (item.suggestedLanguage) {
+            email += '   Proposed revision: ' + item.suggestedLanguage + '\n';
+          }
+          email += '\n';
+          num++;
+        });
+      }
+
+      if (niceItems.length > 0) {
+        email += '--- ADDITIONAL CONSIDERATIONS ---\n\n';
+        niceItems.forEach(item => {
+          email += num + '. ' + item.flagName + '\n';
+          email += '   ' + item.whyRisky + '\n';
+          email += '\n';
+          num++;
+        });
+      }
+
+      email += 'I believe these amendments will create a more balanced agreement that works well for both parties. I am happy to discuss these points at your convenience.\n\n';
+      email += 'Best regards,\n[Your Name]\n';
+
+      navigator.clipboard.writeText(email).then(() => {
+        const btn = event.target;
+        const orig = btn.textContent;
+        btn.textContent = '✅ Email draft copied!';
+        setTimeout(() => btn.textContent = orig, 2500);
+      });
+    }
+
+    function copyNegotiationBullets() {
+      if (!currentAnalysis || !currentAnalysis.negotiationPlaybook) return;
+      const pb = currentAnalysis.negotiationPlaybook;
+
+      let text = 'NEGOTIATION POINTS\n';
+      text += '==================\n\n';
+
+      const groups = { 'must-negotiate': 'MUST-NEGOTIATE', 'should-negotiate': 'SHOULD-NEGOTIATE', 'nice-to-have': 'NICE-TO-HAVE' };
+      for (const [priority, label] of Object.entries(groups)) {
+        const items = pb.suggestions.filter(s => s.priority === priority);
+        if (items.length === 0) continue;
+        text += '## ' + label + '\n\n';
+        items.forEach(item => {
+          text += '• ' + item.flagName + '\n';
+          text += '  Risk: ' + item.whyRisky + '\n';
+          if (item.suggestedLanguage) text += '  Suggested: ' + item.suggestedLanguage + '\n';
+          text += '  Tip: ' + item.negotiationTip + '\n\n';
+        });
+      }
+
+      text += '---\nGenerated by BriefPulse — https://delta.abapture.ai\n';
+
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target;
+        const orig = btn.textContent;
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => btn.textContent = orig, 2500);
+      });
     }
 
     // ========== START ==========

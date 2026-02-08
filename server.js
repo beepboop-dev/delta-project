@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const Stripe = require('stripe');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const path = require('path');
 const crypto = require('crypto');
 const multer = require('multer');
@@ -9,7 +9,6 @@ const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 const PORT = process.env.PORT || 3400;
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY || '');
 const STRIPE_PK = process.env.STRIPE_PK || '';
 const DOMAIN = process.env.DOMAIN || 'https://delta.abapture.ai';
 
@@ -311,6 +310,236 @@ function analyzeContract(text) {
     recommendations: uniqueRecs,
     wordCount: text.split(/\s+/).length,
     charCount: text.length,
+  };
+}
+
+
+// ========== NEGOTIATION SUGGESTIONS ENGINE ==========
+const NEGOTIATION_SUGGESTIONS = {
+  unlimited_liability: {
+    priority: 'must-negotiate',
+    suggestedLanguage: '"The total aggregate liability of either party under this Agreement shall not exceed the total fees paid or payable during the 12-month period preceding the claim."',
+    negotiationTip: 'Frame liability caps as industry standard. Most businesses accept caps tied to contract value. Start by proposing a cap equal to fees paid, then negotiate up if needed.',
+    leveragePoints: ['Liability caps are standard in virtually all commercial contracts', 'Insurance carriers often require liability caps', 'Unlimited liability is a dealbreaker for most legal departments']
+  },
+  rights_waiver: {
+    priority: 'must-negotiate',
+    suggestedLanguage: '"Nothing in this Agreement shall be construed as a waiver of either party\'s rights under applicable federal, state, or local law."',
+    negotiationTip: 'Rights waivers are often unenforceable anyway. Push to remove entirely or narrow to specific, named rights with clear consideration in return.',
+    leveragePoints: ['Many rights waivers are unenforceable in court', 'Broad waivers suggest the other party expects disputes', 'You can offer specific, narrow waivers in exchange for better terms elsewhere']
+  },
+  unilateral_modification: {
+    priority: 'must-negotiate',
+    suggestedLanguage: '"No modification, amendment, or waiver of any provision of this Agreement shall be effective unless in writing and signed by both parties."',
+    negotiationTip: 'This is a non-starter for most sophisticated parties. Insist on mutual written consent for all changes. If they push back, require 60-day notice plus right to terminate if you disagree.',
+    leveragePoints: ['Unilateral modification undermines contract certainty', 'Courts often view these clauses unfavorably', 'Propose a compromise: they can modify with 60-day notice, but you can terminate without penalty if you object']
+  },
+  auto_renewal: {
+    priority: 'should-negotiate',
+    suggestedLanguage: '"This Agreement shall not automatically renew. Any renewal must be mutually agreed upon in writing at least 30 days before the expiration of the current term."',
+    negotiationTip: 'If they insist on auto-renewal, negotiate a shorter notice window (30 days instead of 90-120) and require them to send a reminder notice 45 days before the renewal date.',
+    leveragePoints: ['Auto-renewal often benefits the drafter disproportionately', 'Propose month-to-month after initial term as alternative', 'Many jurisdictions require conspicuous disclosure of auto-renewal terms']
+  },
+  non_compete: {
+    priority: 'must-negotiate',
+    suggestedLanguage: '"For a period of 6 months following termination, [Party] shall not directly solicit the specific clients served during the term of this Agreement within [City/County]. This restriction shall not apply to general advertising or inbound inquiries."',
+    negotiationTip: 'Non-competes must be narrow to be enforceable. Push for: (1) shorter duration (6 months max), (2) limited geography, (3) specific activity restrictions rather than broad industry bans. Many states limit or ban non-competes entirely.',
+    leveragePoints: ['Non-competes are unenforceable in California, Oklahoma, North Dakota, and Minnesota', 'Courts routinely strike down overbroad non-competes', 'FTC has proposed banning most non-competes', 'Offer a non-solicitation as a compromise']
+  },
+  non_solicit: {
+    priority: 'should-negotiate',
+    suggestedLanguage: '"For 12 months following termination, neither party shall directly solicit employees or contractors who were actively engaged during the final 6 months of the term."',
+    negotiationTip: 'Make it mutual and time-limited. Exclude people who respond to general job postings. Define "solicit" narrowly as direct, personal outreach.',
+    leveragePoints: ['Mutual non-solicitation is more enforceable than one-sided', 'General job postings should never count as solicitation', 'Standard duration is 12 months, push back on anything longer']
+  },
+  arbitration: {
+    priority: 'should-negotiate',
+    suggestedLanguage: '"Disputes shall first be submitted to mediation. If unresolved after 30 days, either party may pursue binding arbitration or litigation in [mutually agreed location]. Claims under $25,000 may be brought in small claims court."',
+    negotiationTip: 'Push for mediation-first, then arbitration. Ensure arbitration location is convenient for you. Preserve the right to go to small claims court for minor disputes. Negotiate cost-sharing for arbitration fees.',
+    leveragePoints: ['Arbitration costs can exceed $10,000 in filing fees alone', 'Requiring mediation first often resolves disputes cheaper', 'Small claims court carve-out is standard and reasonable']
+  },
+  indemnification: {
+    priority: 'must-negotiate',
+    suggestedLanguage: '"Each party shall indemnify and hold harmless the other party from claims arising from its own negligence, willful misconduct, or material breach of this Agreement. Total indemnification obligations shall not exceed the fees paid under this Agreement."',
+    negotiationTip: 'Always push for mutual indemnification. Cap it at the contract value. Exclude indemnification for the other party\'s own negligence. Require prompt notice and right to control defense.',
+    leveragePoints: ['One-sided indemnification is a red flag for any attorney', 'Mutual indemnification is the professional standard', 'Cap indemnification at contract value — this is widely accepted']
+  },
+  termination_without_cause: {
+    priority: 'should-negotiate',
+    suggestedLanguage: '"Either party may terminate this Agreement with 60 days\' written notice. Upon termination without cause, [paying party] shall compensate [service party] for all work completed through the termination date, plus a termination fee equal to 30 days\' fees."',
+    negotiationTip: 'Negotiate longer notice periods (60-90 days) and a "kill fee" to cover transition costs. Ensure you get paid for work already completed regardless of termination reason.',
+    leveragePoints: ['Termination without cause is standard, but notice period matters', 'Kill fees compensate for opportunity cost of turning down other work', 'Payment for completed work should be non-negotiable']
+  },
+  penalty_clause: {
+    priority: 'must-negotiate',
+    suggestedLanguage: '"In the event of early termination, the terminating party shall pay liquidated damages equal to [reasonable amount], which the parties agree represents a reasonable estimate of actual damages."',
+    negotiationTip: 'Penalties must be proportional to actual damages to be enforceable. Push for actual damages language instead of fixed penalties. If a fixed amount is required, ensure it\'s reasonable.',
+    leveragePoints: ['Courts can strike down penalties that are disproportionate to actual damages', 'The term "penalty" itself suggests unenforceability — "liquidated damages" is the legally proper term', 'Propose mutual penalty provisions for fairness']
+  },
+  ip_assignment: {
+    priority: 'must-negotiate',
+    suggestedLanguage: '"Client receives an exclusive, perpetual license to use all deliverables created under this Agreement. Contractor retains ownership of pre-existing IP and general tools/methodologies. Contractor may display deliverables in portfolio with Client approval."',
+    negotiationTip: 'Push for license instead of assignment. Retain ownership of pre-existing IP, general skills, and tools. Negotiate portfolio usage rights. If assignment is required, carve out pre-existing IP and ensure fair compensation.',
+    leveragePoints: ['License vs. assignment is a standard negotiation point', 'Pre-existing IP should never be assigned', 'Portfolio rights are important for future business', 'If they insist on assignment, increase your fee by 20-30% to compensate']
+  },
+  non_disparagement: {
+    priority: 'should-negotiate',
+    suggestedLanguage: '"Neither party shall make materially false statements about the other party. This provision shall not restrict truthful statements made in legal proceedings, regulatory filings, or good-faith reviews."',
+    negotiationTip: 'Make it mutual and narrow. Protect your right to give honest reviews and make truthful statements. Ensure it doesn\'t prevent you from discussing factual experiences.',
+    leveragePoints: ['Non-disparagement should always be mutual', 'Truthful statements are often protected by law regardless', 'Carving out legal proceedings and regulatory matters is standard']
+  },
+  moonlighting_restriction: {
+    priority: 'should-negotiate',
+    suggestedLanguage: '"Employee may engage in outside activities, including freelance work, provided such activities do not directly compete with the Company\'s business, interfere with Employee\'s duties, or use Company resources."',
+    negotiationTip: 'Push for the right to do non-competing work. Define "competing" narrowly. Ensure personal projects and open-source contributions are explicitly permitted.',
+    leveragePoints: ['Blanket moonlighting bans are increasingly seen as overreach', 'Many top employers (Google, Microsoft) allow side projects', 'Skilled workers can negotiate this easily — it\'s a retention issue']
+  },
+  confidentiality_overbroad: {
+    priority: 'should-negotiate',
+    suggestedLanguage: '"Confidential Information means information clearly marked as confidential or that a reasonable person would understand to be confidential. Confidentiality obligations expire 3 years after termination. General skills, knowledge, and experience are not confidential."',
+    negotiationTip: 'Narrow the definition. Add a time limit (2-5 years). Explicitly exclude publicly available information, independently developed knowledge, and general skills.',
+    leveragePoints: ['Perpetual confidentiality is unenforceable in many jurisdictions', 'Courts prefer specific, bounded definitions', 'Your general skills and industry knowledge can\'t be made confidential']
+  },
+  personal_guarantee: {
+    priority: 'must-negotiate',
+    suggestedLanguage: '"All obligations under this Agreement are obligations of [Business Entity] only. No individual shall be personally liable for the obligations of [Business Entity]."',
+    negotiationTip: 'Try to eliminate entirely. If required, cap the personal guarantee at a specific dollar amount and set an expiration date. Consider offering additional collateral or a larger security deposit instead.',
+    leveragePoints: ['Personal guarantees defeat the purpose of having an LLC/corporation', 'Offer alternative security: larger deposit, letter of credit, or phased payments', 'If unavoidable, cap it and add an expiration date']
+  },
+  data_rights: {
+    priority: 'must-negotiate',
+    suggestedLanguage: '"Provider may use Customer data solely to provide the Service. Aggregated, anonymized data may be used for product improvement only. Customer data shall be deleted within 30 days of termination upon request."',
+    negotiationTip: 'Limit data usage to service delivery. Require anonymization for any analytics. Add data deletion requirements upon termination. Prohibit selling data to third parties.',
+    leveragePoints: ['GDPR, CCPA, and other privacy laws increasingly restrict data usage', 'Data rights grab is a PR liability — companies are sensitive about this', 'Offer to allow anonymized analytics as a compromise for removing broad rights']
+  },
+  force_majeure: {
+    priority: 'nice-to-have',
+    suggestedLanguage: '"Neither party shall be liable for failure to perform due to circumstances beyond its reasonable control. If the force majeure event continues for more than 60 days, either party may terminate this Agreement without penalty."',
+    negotiationTip: 'Ensure force majeure applies equally to both parties. Add a termination right if the event lasts beyond a reasonable period (30-90 days).',
+    leveragePoints: ['Mutual force majeure is fair and standard', 'A termination trigger prevents indefinite suspension', 'Post-COVID, force majeure clauses receive more scrutiny']
+  },
+  late_payment: {
+    priority: 'should-negotiate',
+    suggestedLanguage: '"Payment shall be due within 30 days of invoice. Late payments shall accrue interest at 1% per month or the maximum rate permitted by law, whichever is less."',
+    negotiationTip: 'Push for Net-30 or Net-15 terms. Negotiate reasonable late fees. For large projects, negotiate milestone payments rather than payment upon completion.',
+    leveragePoints: ['Net-30 is the business standard — anything longer is unfavorable', 'Milestone payments reduce your financial risk on long projects', 'Late payment interest motivates timely payment']
+  },
+  warranty_disclaimer: {
+    priority: 'should-negotiate',
+    suggestedLanguage: '"Provider warrants that the Service shall perform materially in accordance with the documentation for a period of 90 days. Provider shall correct any material defects at no additional cost."',
+    negotiationTip: 'Push for at least a basic warranty of merchantability. For services, request a warranty that work will be performed in a professional manner. Negotiate a correction period for defects.',
+    leveragePoints: ['Complete warranty disclaimers are uncommon in service agreements', 'A basic performance warranty is reasonable and standard', '"As-is" is appropriate for used goods, not professional services']
+  },
+  clawback: {
+    priority: 'must-negotiate',
+    suggestedLanguage: '"Clawback provisions apply only in cases of fraud, material misrepresentation, or breach of fiduciary duty, and only for payments made within the preceding 6 months."',
+    negotiationTip: 'Limit clawback to fraud/misconduct only. Add a time limit. Ensure the clawback amount is proportional to the harm caused, not a blanket return of all compensation.',
+    leveragePoints: ['Broad clawback provisions create financial uncertainty', 'Limiting to fraud/misconduct is the professional standard', 'Time limits on clawback are essential — 6-12 months max']
+  },
+  moral_rights_waiver: {
+    priority: 'nice-to-have',
+    suggestedLanguage: '"Creator retains the right of attribution. Client shall credit Creator in any public-facing use of the work, unless Creator requests otherwise in writing."',
+    negotiationTip: 'Push for attribution rights, especially for creative/design work. At minimum, negotiate portfolio usage rights so you can showcase your work.',
+    leveragePoints: ['Attribution costs the client nothing but means a lot to creators', 'Many jurisdictions make moral rights non-waivable', 'Portfolio rights help you get future business — frame it as win-win']
+  },
+  automatic_price_increase: {
+    priority: 'should-negotiate',
+    suggestedLanguage: '"Fees shall remain fixed during the initial term. Upon renewal, fees may increase by no more than 3% per year or the Consumer Price Index (CPI), whichever is lower."',
+    negotiationTip: 'Cap annual increases at 3-5% or tie them to CPI. Require advance notice of price changes. Negotiate the right to terminate without penalty if increases exceed the cap.',
+    leveragePoints: ['Uncapped increases can double costs over time', 'CPI-linked increases are fair and predictable', 'Right to terminate on price increase gives you leverage']
+  },
+  no_cure_period: {
+    priority: 'should-negotiate',
+    suggestedLanguage: '"In the event of a breach, the non-breaching party shall provide written notice specifying the breach. The breaching party shall have 30 days to cure the breach before termination."',
+    negotiationTip: 'A cure period is fundamental fairness. Push for 30 days for non-payment issues, 15 days for payment issues. Ensure notice must be in writing with specific details.',
+    leveragePoints: ['Cure periods are standard in virtually all commercial contracts', 'Courts view no-cure-period contracts less favorably', 'Immediate termination rights suggest bad faith']
+  },
+  governing_law: {
+    priority: 'nice-to-have',
+    suggestedLanguage: '"This Agreement shall be governed by the laws of [your state]. Any litigation shall be brought in [your county/city]."',
+    negotiationTip: 'Try for your home jurisdiction. If not possible, negotiate for a neutral location or allow for remote proceedings. At minimum, ensure the jurisdiction is reasonable for both parties.',
+    leveragePoints: ['Home court advantage is real — travel costs, local counsel', 'Many courts now allow remote proceedings', 'A neutral jurisdiction is a fair compromise']
+  },
+  venue_selection: {
+    priority: 'nice-to-have',
+    suggestedLanguage: '"Venue for any legal proceedings shall be in [mutually convenient location], or either party may request proceedings be conducted remotely."',
+    negotiationTip: 'Negotiate for your local venue or a neutral location. Remote proceedings are increasingly accepted and save both parties money.',
+    leveragePoints: ['Remote proceedings reduce costs for both parties', 'Inconvenient venue can effectively deny access to justice', 'Courts are sympathetic to venue fairness arguments']
+  },
+  assignment_restriction: {
+    priority: 'nice-to-have',
+    suggestedLanguage: '"Neither party may assign this Agreement without written consent, which shall not be unreasonably withheld. Assignment in connection with a merger, acquisition, or sale of substantially all assets shall be permitted."',
+    negotiationTip: 'Ensure assignment is permitted for M&A transactions. Add "consent shall not be unreasonably withheld" language.',
+    leveragePoints: ['M&A assignment carve-outs are standard', '"Not unreasonably withheld" prevents arbitrary blocking', 'This matters if you ever sell your business']
+  },
+  limitation_of_remedy: {
+    priority: 'should-negotiate',
+    suggestedLanguage: '"Limitation of liability shall not apply to: (a) breaches of confidentiality; (b) intellectual property infringement; (c) indemnification obligations; or (d) willful misconduct or gross negligence."',
+    negotiationTip: 'Accept reasonable liability caps but carve out exceptions for serious breaches. The cap should be at least 12 months of fees, not a nominal amount.',
+    leveragePoints: ['Carve-outs for serious breaches are industry standard', 'A $10 liability cap is effectively no liability at all', 'Insurance can cover liability concerns — ask if they have E&O insurance']
+  },
+  entire_agreement: {
+    priority: 'nice-to-have',
+    suggestedLanguage: null,
+    negotiationTip: 'Before signing, ensure ALL promises made during negotiations are included in the written agreement. If they said it but didn\'t write it, it doesn\'t count.',
+    leveragePoints: ['This is standard and generally acceptable', 'Use it as motivation to get everything in writing', 'Reference specific emails or proposals that should be incorporated']
+  },
+  severability_missing: {
+    priority: 'nice-to-have',
+    suggestedLanguage: '"If any provision of this Agreement is found to be invalid or unenforceable, the remaining provisions shall continue in full force and effect."',
+    negotiationTip: 'Adding a severability clause protects both parties. It\'s a standard boilerplate provision that the other side should readily accept.',
+    leveragePoints: ['Severability is standard boilerplate', 'Both parties benefit from it', 'Its absence is usually an oversight, not intentional']
+  },
+  survival_clause: {
+    priority: 'nice-to-have',
+    suggestedLanguage: '"Only Sections [specific sections] shall survive termination, for a period not exceeding 24 months after the termination date."',
+    negotiationTip: 'Review which obligations survive and for how long. Push for specific time limits on survival rather than indefinite post-termination obligations.',
+    leveragePoints: ['Indefinite survival is often unenforceable', 'Specific sections and time limits create clarity', 'Standard survival period is 12-24 months']
+  }
+};
+
+function generateNegotiationPlaybook(redFlags) {
+  const suggestions = [];
+  for (const flag of redFlags) {
+    const neg = NEGOTIATION_SUGGESTIONS[flag.id];
+    if (neg) {
+      suggestions.push({
+        flagId: flag.id,
+        flagName: flag.name,
+        severity: flag.severity,
+        priority: neg.priority,
+        problematicClause: flag.context || '',
+        whyRisky: flag.plainEnglish || flag.description,
+        suggestedLanguage: neg.suggestedLanguage,
+        negotiationTip: neg.negotiationTip,
+        leveragePoints: neg.leveragePoints || []
+      });
+    } else {
+      // Generic suggestion for unknown flags
+      suggestions.push({
+        flagId: flag.id,
+        flagName: flag.name,
+        severity: flag.severity,
+        priority: flag.severity === 'high' ? 'must-negotiate' : flag.severity === 'medium' ? 'should-negotiate' : 'nice-to-have',
+        problematicClause: flag.context || '',
+        whyRisky: flag.plainEnglish || flag.description,
+        suggestedLanguage: null,
+        negotiationTip: 'Review this clause carefully with legal counsel. Consider requesting mutual obligations and reasonable limitations.',
+        leveragePoints: ['Industry standards favor balanced terms', 'Courts tend to interpret ambiguous terms against the drafter']
+      });
+    }
+  }
+  // Sort by priority
+  const priorityOrder = { 'must-negotiate': 0, 'should-negotiate': 1, 'nice-to-have': 2 };
+  suggestions.sort((a, b) => (priorityOrder[a.priority] || 2) - (priorityOrder[b.priority] || 2));
+  return {
+    suggestions,
+    summary: {
+      total: suggestions.length,
+      mustNegotiate: suggestions.filter(s => s.priority === 'must-negotiate').length,
+      shouldNegotiate: suggestions.filter(s => s.priority === 'should-negotiate').length,
+      niceToHave: suggestions.filter(s => s.priority === 'nice-to-have').length
+    }
   };
 }
 
@@ -798,6 +1027,10 @@ app.get('/api/config', (req, res) => {
   res.json({ stripePublicKey: STRIPE_PK, sampleContracts: Object.keys(SAMPLE_CONTRACTS).map(k => ({ id: k, name: SAMPLE_CONTRACTS[k].name, icon: SAMPLE_CONTRACTS[k].icon, description: SAMPLE_CONTRACTS[k].description })) });
 });
 
+app.get('/api/stripe/config', (req, res) => {
+  res.json({ publishableKey: process.env.STRIPE_PUBLISHABLE_KEY });
+});
+
 // Analyze
 app.post('/api/analyze', optionalAuth, (req, res) => {
   const { text } = req.body;
@@ -814,6 +1047,7 @@ app.post('/api/analyze', optionalAuth, (req, res) => {
   const result = analyzeContract(text);
   const clauseData = annotateContractClauses(text);
   result.clauseAnnotations = clauseData;
+  result.negotiationPlaybook = generateNegotiationPlaybook(result.redFlags);
 
   // Generate share ID
   const shareId = crypto.randomBytes(6).toString('hex');
@@ -972,16 +1206,18 @@ app.post('/api/checkout', async (req, res) => {
   try {
     const { plan } = req.body;
     const prices = {
+      'pro-monthly': { amount: 2900, interval: 'month', name: 'BriefPulse Pro Monthly' },
+      'pro-annual': { amount: 19900, interval: 'year', name: 'BriefPulse Pro Annual' },
       monthly: { amount: 2900, interval: 'month', name: 'BriefPulse Pro Monthly' },
       annual: { amount: 19900, interval: 'year', name: 'BriefPulse Pro Annual' },
     };
-    const p = prices[plan] || prices.monthly;
+    const p = prices[plan] || prices['pro-monthly'];
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [{ price_data: { currency: 'usd', product_data: { name: p.name, description: 'Unlimited AI contract analyses' }, unit_amount: p.amount, recurring: { interval: p.interval } }, quantity: 1 }],
       mode: 'subscription',
-      success_url: `${DOMAIN}?success=true`,
-      cancel_url: `${DOMAIN}?canceled=true`,
+      success_url: 'https://delta.abapture.ai/?payment=success',
+      cancel_url: 'https://delta.abapture.ai',
     });
     res.json({ url: session.url });
   } catch (err) {
