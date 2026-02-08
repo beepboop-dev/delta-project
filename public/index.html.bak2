@@ -286,50 +286,6 @@
     .bulk-detail-header { display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
     .bulk-detail-body { display:none; margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border); }
     .bulk-detail-body.open { display:block; }
-  
-    /* Clause Annotation Styles */
-    .clause-stats { display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; }
-    .clause-stat { padding:0.6rem 1.2rem; border-radius:8px; font-weight:600; font-size:0.9rem; display:flex; align-items:center; gap:0.5rem; }
-    .clause-stat.safe { background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.3); }
-    .clause-stat.caution { background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.3); }
-    .clause-stat.danger { background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3); }
-    .clause-item { border:1px solid var(--border); border-radius:10px; margin-bottom:0.75rem; overflow:hidden; transition:all 0.2s; }
-    .clause-item:hover { border-color:var(--primary); }
-    .clause-item.risk-red { border-left:4px solid #ef4444; }
-    .clause-item.risk-yellow { border-left:4px solid #f59e0b; }
-    .clause-item.risk-green { border-left:4px solid #10b981; }
-    .clause-header { padding:0.8rem 1rem; cursor:pointer; display:flex; align-items:center; gap:0.75rem; background:var(--card); }
-    .clause-header:hover { background:rgba(255,255,255,0.03); }
-    .clause-risk-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
-    .clause-risk-dot.red { background:#ef4444; box-shadow:0 0 6px rgba(239,68,68,0.5); }
-    .clause-risk-dot.yellow { background:#f59e0b; box-shadow:0 0 6px rgba(245,158,11,0.5); }
-    .clause-risk-dot.green { background:#10b981; box-shadow:0 0 6px rgba(16,185,129,0.5); }
-    .clause-title { flex:1; font-weight:500; font-size:0.95rem; }
-    .clause-risk-label { font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:2px 8px; border-radius:4px; }
-    .clause-risk-label.red { background:rgba(239,68,68,0.2); color:#ef4444; }
-    .clause-risk-label.yellow { background:rgba(245,158,11,0.2); color:#f59e0b; }
-    .clause-risk-label.green { background:rgba(16,185,129,0.2); color:#10b981; }
-    .clause-chevron { transition:transform 0.2s; color:var(--text-dim); }
-    .clause-item.expanded .clause-chevron { transform:rotate(180deg); }
-    .clause-body { display:none; padding:0 1rem 1rem; border-top:1px solid var(--border); }
-    .clause-item.expanded .clause-body { display:block; }
-    .clause-text { background:rgba(0,0,0,0.2); padding:0.8rem; border-radius:6px; font-size:0.85rem; line-height:1.6; color:var(--text-dim); margin:0.75rem 0; white-space:pre-wrap; max-height:200px; overflow-y:auto; }
-    .clause-annotation { margin:0.5rem 0; padding:0.6rem 0.8rem; border-radius:6px; font-size:0.85rem; }
-    .clause-annotation.red { background:rgba(239,68,68,0.08); border-left:3px solid #ef4444; }
-    .clause-annotation.yellow { background:rgba(245,158,11,0.08); border-left:3px solid #f59e0b; }
-    .clause-annotation.green { background:rgba(16,185,129,0.08); border-left:3px solid #10b981; }
-    .annotation-label { font-weight:700; font-size:0.8rem; margin-bottom:0.3rem; }
-    .annotation-label.red { color:#ef4444; }
-    .annotation-label.yellow { color:#f59e0b; }
-    .annotation-label.green { color:#10b981; }
-    .annotation-detail { color:var(--text-dim); line-height:1.5; margin:0.2rem 0; }
-    .annotation-detail strong { color:var(--text); }
-    .annotation-alternative { background:rgba(99,102,241,0.1); border:1px dashed rgba(99,102,241,0.3); padding:0.5rem 0.7rem; border-radius:4px; margin-top:0.4rem; font-size:0.82rem; color:#818cf8; }
-    .annotation-alternative::before { content:'✏️ '; }
-    .clause-filter-bar { display:flex; gap:0.5rem; margin-bottom:1rem; flex-wrap:wrap; }
-    .clause-filter-btn { padding:0.4rem 0.8rem; border-radius:6px; border:1px solid var(--border); background:transparent; color:var(--text-dim); cursor:pointer; font-size:0.8rem; transition:all 0.2s; }
-    .clause-filter-btn:hover, .clause-filter-btn.active { background:var(--primary); color:white; border-color:var(--primary); }
-  
   </style>
 </head>
 <body>
@@ -447,7 +403,6 @@
           <button class="tab" onclick="showResultTab('recs')">💡 Recommendations</button>
           <button class="tab" onclick="showResultTab('terms')">📊 Key Terms</button>
           <button class="tab" onclick="showResultTab('obligations')">📜 Obligations</button>
-          <button class="tab" onclick="showResultTab('annotated')">📄 Annotated View</button>
         </div>
 
         <div id="tab-flags" class="card fade-in">
@@ -476,12 +431,7 @@
         <div class="demo-section" id="demo-output"></div>
       </div>
 
-      <div id="tab-annotated" class="card hidden fade-in">
-          <div id="clause-stats" class="clause-stats"></div>
-          <div id="annotated-clauses"></div>
-        </div>
-
-        <!-- Testimonials -->
+      <!-- Testimonials -->
       <hr class="divider">
       <div class="section-title">Trusted by Professionals</div>
       <p class="section-sub">Join thousands who review contracts smarter</p>
@@ -935,79 +885,7 @@
       document.getElementById('obligations-list').innerHTML = '<h3>📜 Key Obligations</h3>' +
         (data.obligations?.length ? data.obligations.map(o => `<div class="obligation"><span class="obligation-strength ${o.strength}">${o.strength}</span>${escHtml(o.text)}</div>`).join('') : '<p style="color:var(--text-dim)">No specific obligations extracted.</p>');
 
-      // Display annotated view
-      if (data.clauseAnnotations) displayAnnotatedView(data.clauseAnnotations);
-
       rs.scrollIntoView({ behavior: 'smooth' });
-    }
-
-
-    function displayAnnotatedView(clauseData) {
-      if (!clauseData) return;
-      const stats = clauseData.stats;
-      const clauses = clauseData.clauses;
-      
-      // Stats bar
-      document.getElementById('clause-stats').innerHTML = `
-        <div class="clause-stat safe">🟢 ${stats.safe} Safe</div>
-        <div class="clause-stat caution">🟡 ${stats.caution} Caution</div>
-        <div class="clause-stat danger">🔴 ${stats.danger} Danger</div>
-        <div style="color:var(--text-dim);display:flex;align-items:center;font-size:0.85rem">${stats.total} clauses analyzed</div>
-      `;
-      
-      // Filter bar + clauses
-      let html = `<div class="clause-filter-bar">
-        <button class="clause-filter-btn active" onclick="filterClauses('all',this)">All (${stats.total})</button>
-        <button class="clause-filter-btn" onclick="filterClauses('red',this)">🔴 Danger (${stats.danger})</button>
-        <button class="clause-filter-btn" onclick="filterClauses('yellow',this)">🟡 Caution (${stats.caution})</button>
-        <button class="clause-filter-btn" onclick="filterClauses('green',this)">🟢 Safe (${stats.safe})</button>
-      </div>`;
-      
-      clauses.forEach((c, i) => {
-        const expanded = c.risk === 'red' ? ' expanded' : '';
-        const riskWord = c.risk === 'red' ? 'Danger' : c.risk === 'yellow' ? 'Caution' : 'Safe';
-        let annotationsHtml = '';
-        
-        if (c.annotations.length > 0) {
-          c.annotations.forEach(a => {
-            annotationsHtml += `<div class="clause-annotation ${a.risk}">
-              <div class="annotation-label ${a.risk}">${a.risk === 'red' ? '🔴' : a.risk === 'yellow' ? '🟡' : '🟢'} ${a.label}</div>
-              <div class="annotation-detail"><strong>What it means:</strong> ${a.explanation}</div>
-              <div class="annotation-detail"><strong>Watch out:</strong> ${a.concern}</div>
-              ${a.alternative ? `<div class="annotation-alternative">${a.alternative}</div>` : ''}
-            </div>`;
-          });
-        } else {
-          annotationsHtml = '<div class="annotation-detail" style="color:#10b981;padding:0.5rem 0">✅ No specific concerns identified in this clause.</div>';
-        }
-        
-        html += `<div class="clause-item risk-${c.risk}${expanded}" data-risk="${c.risk}">
-          <div class="clause-header" onclick="this.parentElement.classList.toggle('expanded')">
-            <div class="clause-risk-dot ${c.risk}"></div>
-            <div class="clause-title">${escHtml(c.title)}</div>
-            <span class="clause-risk-label ${c.risk}">${riskWord}</span>
-            <span class="clause-chevron">▼</span>
-          </div>
-          <div class="clause-body">
-            <div class="clause-text">${escHtml(c.text)}</div>
-            ${annotationsHtml}
-          </div>
-        </div>`;
-      });
-      
-      document.getElementById('annotated-clauses').innerHTML = html;
-    }
-    
-    function filterClauses(risk, btn) {
-      document.querySelectorAll('.clause-filter-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.querySelectorAll('.clause-item').forEach(el => {
-        if (risk === 'all' || el.dataset.risk === risk) {
-          el.style.display = '';
-        } else {
-          el.style.display = 'none';
-        }
-      });
     }
 
     function showResultTab(tab) {

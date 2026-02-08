@@ -315,130 +315,6 @@ function analyzeContract(text) {
 }
 
 // ========== COMPARE TWO CONTRACTS ==========
-
-// ========== CLAUSE-BY-CLAUSE ANNOTATION ==========
-function annotateContractClauses(text) {
-  // Split contract into clauses by common patterns
-  const clausePatterns = [
-    /(?:^|\n)\s*(?:\d+\.(?:\d+\.?)*)\s+/gm,           // 1. 2. 3.1 etc.
-    /(?:^|\n)\s*(?:Section|Article|Clause)\s+\d+/gim,   // Section 1, Article 2
-    /(?:^|\n)\s*(?:[A-Z]\.)\s+/gm,                      // A. B. C.
-    /(?:^|\n)\s*(?:[ivxlc]+\.)\s+/gm,                   // i. ii. iii.
-  ];
-  
-  // Try to split by numbered sections first
-  let clauses = [];
-  const sectionRegex = /(?:^|\n)\s*(?:(?:\d+\.(?:\d+\.?)*)|(?:(?:Section|Article|Clause)\s+\d+[^:\n]*:?)|(?:[A-Z]\.)\s)/gim;
-  const matches = [...text.matchAll(sectionRegex)];
-  
-  if (matches.length >= 3) {
-    // Use matched sections
-    for (let i = 0; i < matches.length; i++) {
-      const start = matches[i].index;
-      const end = i + 1 < matches.length ? matches[i + 1].index : text.length;
-      const clauseText = text.slice(start, end).trim();
-      if (clauseText.length > 20) {
-        clauses.push(clauseText);
-      }
-    }
-    // Add preamble if there's text before first match
-    if (matches[0].index > 50) {
-      clauses.unshift(text.slice(0, matches[0].index).trim());
-    }
-  } else {
-    // Fall back to paragraph splitting
-    const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim().length > 20);
-    clauses = paragraphs;
-  }
-  
-  if (clauses.length === 0) {
-    clauses = [text];
-  }
-
-  // Annotate each clause
-  const CLAUSE_ANNOTATIONS = [
-    { patterns: [/unlimited liability/i, /shall be liable for all/i, /liability shall not be (limited|capped)/i], risk: 'red', label: 'Unlimited Liability', explanation: 'This clause removes any cap on what you could owe. There is no maximum limit on your financial exposure.', concern: 'Without a liability cap, you could be responsible for damages far exceeding the value of the contract.', alternative: 'Consider: "Total liability under this agreement shall not exceed the fees paid in the preceding 12 months."' },
-    { patterns: [/waive(s)? (any |all )?rights?/i, /surrender(s)? (any |all )?rights?/i, /relinquish/i, /forfeit(s)? (any |all )?rights?/i], risk: 'red', label: 'Rights Waiver', explanation: 'You are giving up legal protections or entitlements that you would normally have.', concern: 'Once waived, these rights are extremely difficult or impossible to reclaim.', alternative: 'Consider: "Nothing in this agreement shall be construed as a waiver of rights under applicable law."' },
-    { patterns: [/may (modify|change|alter|amend|update) (this|the) (agreement|contract|terms)/i, /reserves? the right to (modify|change|alter|amend)/i], risk: 'red', label: 'Unilateral Modification', explanation: 'The other party can change the terms of this agreement without needing your approval.', concern: 'They could change pricing, obligations, or other critical terms at any time.', alternative: 'Consider: "Any amendments to this agreement must be in writing and signed by both parties."' },
-    { patterns: [/at (its|our|their) sole discretion/i], risk: 'red', label: 'Sole Discretion', explanation: 'One party has complete decision-making power with no requirement to be reasonable or fair.', concern: 'Sole discretion means they don\'t need to justify their decisions to you.', alternative: 'Consider: "at its reasonable discretion" or "with mutual agreement of both parties."' },
-    { patterns: [/without (prior )?notice/i], risk: 'yellow', label: 'No Notice Required', explanation: 'Actions can be taken without informing you first.', concern: 'You may not have time to prepare or respond to changes.', alternative: 'Consider: "with at least 30 days\' written notice."' },
-    { patterns: [/auto(matically)?[- ]renew/i, /shall (automatically )?renew/i], risk: 'yellow', label: 'Auto-Renewal', explanation: 'This contract will automatically extend for another term unless you actively cancel.', concern: 'If you forget to cancel before the deadline, you\'re locked in for another period.', alternative: 'Consider: "This agreement shall expire at the end of the initial term unless both parties agree in writing to renew."' },
-    { patterns: [/non[- ]?compete/i, /shall not (compete|engage in)/i, /covenant not to compete/i, /restrictive covenant/i], risk: 'red', label: 'Non-Compete', explanation: 'After this agreement ends, you are restricted from working in competing businesses.', concern: 'Overly broad non-competes can prevent you from earning a living in your field.', alternative: 'Consider narrowing: "limited to [specific geography] for a period not exceeding 6 months, covering only [specific activities]."' },
-    { patterns: [/non[- ]?solicit/i, /shall not (solicit|recruit|hire)/i], risk: 'yellow', label: 'Non-Solicitation', explanation: 'You cannot approach or recruit their employees or clients.', concern: 'This may limit your business relationships even after the contract ends.', alternative: 'Consider: "Non-solicitation shall apply only during the term and for 6 months after termination."' },
-    { patterns: [/binding arbitration/i, /mandatory arbitration/i, /shall be (resolved|settled) (by|through) arbitration/i], risk: 'yellow', label: 'Mandatory Arbitration', explanation: 'Any disputes must go through private arbitration instead of the court system.', concern: 'Arbitration can be expensive, and decisions are nearly impossible to appeal.', alternative: 'Consider: "Disputes under $10,000 may be brought in small claims court. All other disputes shall be resolved through mediation before arbitration."' },
-    { patterns: [/waive.{0,20}(right to|jury) trial/i, /class action waiver/i], risk: 'red', label: 'Trial/Class Action Waiver', explanation: 'You are giving up your right to a jury trial or to join a class-action lawsuit.', concern: 'If many people are harmed by the same issue, you cannot band together for legal action.', alternative: 'Consider removing this clause entirely or limiting waiver to specific dispute types.' },
-    { patterns: [/indemnif(y|ies|ication)/i, /hold harmless/i, /defend and indemnify/i], risk: 'red', label: 'Indemnification', explanation: 'You agree to cover the other party\'s legal costs and damages if claims arise.', concern: 'One-sided indemnification means you bear all the financial risk of third-party claims.', alternative: 'Consider: "Each party shall indemnify the other for claims arising from its own negligence or breach." (mutual indemnification)' },
-    { patterns: [/terminat(e|ion) (without|for no) cause/i, /terminat(e|ion) at (any time|will|its sole)/i, /immediately terminat/i], risk: 'yellow', label: 'Termination Rights', explanation: 'The contract can be ended, potentially without reason or with short notice.', concern: 'You could lose income or access with little or no warning.', alternative: 'Consider: "Either party may terminate with 60 days\' written notice. Upon termination, payment for work completed shall be due within 15 days."' },
-    { patterns: [/liquidated damages/i, /penalty (of|for|clause)/i, /early termination fee/i], risk: 'red', label: 'Penalty Clause', explanation: 'If you breach or exit early, you owe a specific financial penalty.', concern: 'Penalties may be disproportionate to actual damages suffered.', alternative: 'Consider: "Liquidated damages shall be limited to actual demonstrable losses, not to exceed [specific amount]."' },
-    { patterns: [/assign(s|ment)?.{0,30}(intellectual property|IP|copyright|patent|trademark)/i, /work(s)?[- ]?(made)?[- ]?for[- ]?hire/i, /hereby assign/i], risk: 'red', label: 'IP Assignment', explanation: 'Ownership of intellectual property you create is being transferred to the other party.', concern: 'You lose all rights to your own work — you can\'t reuse it, display it, or build upon it.', alternative: 'Consider: "Contractor grants Client a perpetual license to use deliverables. Contractor retains underlying IP and portfolio rights."' },
-    { patterns: [/non[- ]?disparagement/i, /shall not (make|publish).{0,30}(negative|disparaging)/i], risk: 'yellow', label: 'Non-Disparagement', explanation: 'You cannot make negative public statements about the other party.', concern: 'Even truthful criticism or honest reviews could be considered a violation.', alternative: 'Consider: "Non-disparagement shall be mutual and shall not restrict truthful statements made in legal proceedings or regulatory filings."' },
-    { patterns: [/devote.{0,20}(full|entire|exclusive).{0,20}(time|attention|effort)/i, /shall not (engage in|perform).{0,30}(other|outside)/i, /exclusiv(e|ity) (of service|engagement)/i], risk: 'yellow', label: 'Exclusivity/Moonlighting Restriction', explanation: 'You are restricted from doing other work or side projects during this agreement.', concern: 'This could prevent freelancing, consulting, or personal projects.', alternative: 'Consider: "Employee may engage in outside activities provided they do not directly compete or interfere with duties under this agreement."' },
-    { patterns: [/all (information|materials|data).{0,30}confidential/i, /perpetual(ly)? confidential/i, /in perpetuity/i], risk: 'yellow', label: 'Broad Confidentiality', explanation: 'A wide range of information is classified as confidential, potentially indefinitely.', concern: 'Overly broad definitions can restrict your general knowledge and skills.', alternative: 'Consider: "Confidential information shall be specifically marked as such. Obligations expire 3 years after termination."' },
-    { patterns: [/govern(ed|ing) (by the )?law(s)? of/i, /jurisdiction of the courts of/i, /exclusive (jurisdiction|venue)/i], risk: 'green', label: 'Governing Law', explanation: 'This specifies which state/country\'s laws apply and where disputes are handled.', concern: 'If the jurisdiction is far from you, legal proceedings could be costly and inconvenient.', alternative: null },
-    { patterns: [/entire agreement/i, /supersedes? (all )?prior/i], risk: 'green', label: 'Entire Agreement', explanation: 'This document replaces all prior negotiations, agreements, and promises.', concern: 'Any verbal promises or email agreements that aren\'t in this document are no longer valid.', alternative: null },
-    { patterns: [/severab/i], risk: 'green', label: 'Severability', explanation: 'If any part of this contract is found invalid, the rest still stands.', concern: 'This is a standard protective clause — generally favorable for both parties.', alternative: null },
-    { patterns: [/shall survive (termination|expiration)/i, /survive(s)? the (termination|expiration)/i], risk: 'yellow', label: 'Survival Clause', explanation: 'Certain obligations continue even after the contract ends.', concern: 'Check which specific obligations survive — non-competes and confidentiality often outlast the contract.', alternative: 'Consider: "Only Sections [X] and [Y] shall survive termination, for a period not exceeding 12 months."' },
-    { patterns: [/personal(ly)? guarantee/i, /jointly and severally/i], risk: 'red', label: 'Personal Guarantee', explanation: 'You are personally responsible — not just your business entity.', concern: 'Your personal assets (home, savings) could be at risk if obligations aren\'t met.', alternative: 'Consider removing the personal guarantee or capping it: "Personal guarantee shall not exceed $[amount]."' },
-    { patterns: [/irrevocable.{0,20}license/i, /perpetual.{0,20}license/i, /right to (use|sell|share).{0,20}(data|information|content)/i], risk: 'red', label: 'Data/Content Rights', explanation: 'The other party receives broad, potentially permanent rights to your data or content.', concern: 'They could use, sell, or sublicense your data without further consent or compensation.', alternative: 'Consider: "License is limited to the purpose of this agreement and terminates upon contract expiration."' },
-    { patterns: [/as[- ]?is/i, /without warranty/i, /disclaims? (all |any )?warrant/i], risk: 'yellow', label: 'Warranty Disclaimer', explanation: 'The product or service comes with no guarantees of quality or fitness.', concern: 'If something doesn\'t work, you may have no recourse.', alternative: 'Consider: "Provider warrants that services shall be performed in a professional and workmanlike manner."' },
-    { patterns: [/clawback/i, /repay(ment)?.{0,30}(bonus|commission|payment)/i], risk: 'red', label: 'Clawback', explanation: 'Money already paid to you can be demanded back under certain conditions.', concern: 'Even if you\'ve spent the money, you could be forced to return it.', alternative: 'Consider: "Clawback applies only in cases of fraud or material misrepresentation, within 6 months of payment."' },
-    { patterns: [/moral rights/i, /waive.{0,30}moral/i], risk: 'yellow', label: 'Moral Rights Waiver', explanation: 'You waive the right to be credited for your creative work.', concern: 'Your work can be modified, used without attribution, or credited to someone else.', alternative: 'Consider: "Creator retains the right of attribution for all published works."' },
-    { patterns: [/force majeure/i, /act(s)? of god/i, /beyond.{0,20}(reasonable )?control/i], risk: 'green', label: 'Force Majeure', explanation: 'Excuses performance failures caused by extraordinary events (war, natural disasters, etc).', concern: 'Check if this protection applies equally to both parties.', alternative: null },
-    { patterns: [/price.{0,20}increase/i, /rate.{0,20}increase/i, /escalat(e|ion)/i, /annual increase/i], risk: 'yellow', label: 'Price Escalation', explanation: 'Costs may automatically increase over time.', concern: 'Without a cap, increases could become unaffordable.', alternative: 'Consider: "Annual increases shall not exceed 3% or CPI, whichever is lower."' },
-    { patterns: [/net[- ]?(30|45|60|90)/i, /payment.{0,30}(within|due in) (60|90|120)/i], risk: 'yellow', label: 'Payment Terms', explanation: 'Specifies when payment is due after invoicing.', concern: 'Long payment terms (Net-60, Net-90) can cause cash flow problems.', alternative: 'Consider: "Payment due within 15 days of invoice. Late payments accrue interest at 1.5% per month."' },
-    { patterns: [/may not (assign|transfer)/i, /shall not (assign|transfer)/i], risk: 'green', label: 'Assignment Restriction', explanation: 'You cannot transfer this contract to another party.', concern: 'If you sell your business, this contract may not transfer with it.', alternative: null },
-    { patterns: [/renewal period/i, /unless (written )?notice.{0,30}(days?|months?)/i], risk: 'yellow', label: 'Renewal Terms', explanation: 'Details how and when the contract renews.', concern: 'Make sure you know the exact cancellation deadline.', alternative: null },
-    { patterns: [/terminat(e|ion) (with|upon) (\d+|thirty|sixty|ninety) days?' notice/i], risk: 'green', label: 'Notice Period for Termination', explanation: 'The contract requires advance notice before termination.', concern: 'Standard clause — check the notice period is reasonable for your situation.', alternative: null },
-    { patterns: [/sole (and exclusive )?remedy/i, /exclusive remedy/i, /maximum (aggregate )?liability.{0,30}shall not exceed/i], risk: 'yellow', label: 'Limitation of Remedy', explanation: 'Your legal options for recovery are capped or restricted.', concern: 'Maximum recovery could be much less than your actual damages.', alternative: 'Consider: "Limitation of liability shall not apply to breaches of confidentiality, IP infringement, or willful misconduct."' },
-  ];
-
-  const annotatedClauses = clauses.map((clauseText, idx) => {
-    const annotations = [];
-    const lower = clauseText.toLowerCase();
-    
-    for (const ann of CLAUSE_ANNOTATIONS) {
-      for (const pattern of ann.patterns) {
-        if (pattern.test(clauseText)) {
-          annotations.push({
-            risk: ann.risk,
-            label: ann.label,
-            explanation: ann.explanation,
-            concern: ann.concern,
-            alternative: ann.alternative,
-          });
-          break;
-        }
-      }
-    }
-
-    // Determine overall clause risk
-    let risk = 'green';
-    if (annotations.some(a => a.risk === 'red')) risk = 'red';
-    else if (annotations.some(a => a.risk === 'yellow')) risk = 'yellow';
-
-    // Extract a title from the clause
-    const firstLine = clauseText.split('\n')[0].trim().slice(0, 100);
-    const title = firstLine.replace(/^\d+\.?\d*\.?\s*/, '').replace(/[:.]\s*$/, '').trim() || `Clause ${idx + 1}`;
-
-    return {
-      index: idx + 1,
-      title: title.length > 80 ? title.slice(0, 77) + '...' : title,
-      text: clauseText,
-      risk,
-      annotations,
-    };
-  });
-
-  // Stats
-  const stats = {
-    total: annotatedClauses.length,
-    safe: annotatedClauses.filter(c => c.risk === 'green').length,
-    caution: annotatedClauses.filter(c => c.risk === 'yellow').length,
-    danger: annotatedClauses.filter(c => c.risk === 'red').length,
-  };
-
-  return { clauses: annotatedClauses, stats };
-}
 function compareContracts(text1, text2) {
   const a1 = analyzeContract(text1);
   const a2 = analyzeContract(text2);
@@ -812,8 +688,6 @@ app.post('/api/analyze', optionalAuth, (req, res) => {
   if (!req.userId) u.count++;
 
   const result = analyzeContract(text);
-  const clauseData = annotateContractClauses(text);
-  result.clauseAnnotations = clauseData;
 
   // Generate share ID
   const shareId = crypto.randomBytes(6).toString('hex');
