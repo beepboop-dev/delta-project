@@ -8,6 +8,16 @@ const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
 const { CONTRACT_TEMPLATES } = require("./templates");
+const initSqlJs = require('sql.js');
+const DB_PATH = '/opt/delta-project/briefpulse.db';
+let db = null;
+(async () => {
+  const SQL = await initSqlJs();
+  try { const buf = fs.readFileSync(DB_PATH); db = new SQL.Database(buf); } catch(e) { db = new SQL.Database(); }
+  db.run('CREATE TABLE IF NOT EXISTS bulk_sessions (id TEXT PRIMARY KEY, name TEXT, created_at TEXT, summary TEXT, results TEXT)');
+  saveDb();
+})();
+function saveDb() { if(db) fs.writeFileSync(DB_PATH, Buffer.from(db.export())); }
 const app = express();
 const PORT = process.env.PORT || 3400;
 const STRIPE_PK = process.env.STRIPE_PK || '';
@@ -1406,6 +1416,62 @@ app.post("/api/templates/:id/analyze", optionalAuth, (req, res) => {
   res.json({ ...result, filledText: text, shareId });
 });
 
+
+// ========== BULK SESSION STORAGE ==========
+app.post('/api/bulk-sessions', (req, res) => {
+  const { name, summary, results } = req.body;
+  if (!summary || !results) return res.status(400).json({ error: 'Missing data' });
+  const id = crypto.randomBytes(8).toString('hex');
+  const created_at = new Date().toISOString();
+  db.run('INSERT INTO bulk_sessions (id, name, created_at, summary, results) VALUES (?, ?, ?, ?, ?)', [id, name || 'Untitled Batch', created_at, JSON.stringify(summary), JSON.stringify(results)]); saveDb();
+  res.json({ id, name: name || 'Untitled Batch', created_at });
+});
+
+app.get('/api/bulk-sessions', (req, res) => {
+  const rows = (db ? db.exec('SELECT id, name, created_at, summary FROM bulk_sessions ORDER BY created_at DESC LIMIT 50') : [{values:[]}])[0]?.values?.map(r => ({id:r[0],name:r[1],created_at:r[2],summary:r[3]})) || [];
+  res.json(rows.map(r => ({ ...r, summary: JSON.parse(r.summary) })));
+});
+
+app.get('/api/bulk-sessions/:id', (req, res) => {
+  const row = (() => { const r = db?.exec('SELECT * FROM bulk_sessions WHERE id = ?', [req.params.id]); return r?.[0]?.values?.[0] ? {id:r[0].values[0][0],name:r[0].values[0][1],created_at:r[0].values[0][2],summary:r[0].values[0][3],results:r[0].values[0][4]} : null; })();
+  if (!row) return res.status(404).json({ error: 'Session not found' });
+  res.json({ ...row, summary: JSON.parse(row.summary), results: JSON.parse(row.results) });
+});
+
+app.delete('/api/bulk-sessions/:id', (req, res) => {
+  db?.run('DELETE FROM bulk_sessions WHERE id = ?', [req.params.id]); saveDb();
+  res.json({ ok: true });
+});
+
+// ========== BULK CSV EXPORT ==========
+app.post('/api/bulk-export-csv', (req, res) => {
+  const { results } = req.body;
+  if (!results || !Array.isArray(results)) return res.status(400).json({ error: 'No results' });
+  const valid = results.filter(r => r.analysis);
+  const headers = ['Contract Name','Document Type','Risk Score','Risk Level','Red Flag Count','Top Issues','Favorable Clauses','Unfavorable Clauses','Word Count'];
+  const rows = valid.map(r => {
+    const a = r.analysis;
+    const topIssues = a.redFlags.slice(0,3).map(f => f.name).join('; ') || 'None';
+    const clauseStats = a.clauseAnnotations?.stats || { safe: 0, caution: 0, danger: 0 };
+    return [
+      r.filename,
+      a.documentType?.label || 'Unknown',
+      a.riskScore,
+      a.riskLevel,
+      a.redFlags.length,
+      topIssues,
+      clauseStats.safe,
+      clauseStats.caution + clauseStats.danger,
+      a.wordCount
+    ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',');
+  });
+  const csv = [headers.join(","), ...rows].join(String.fromCharCode(10));
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename="bulk-analysis-summary.csv"');
+  res.send(csv);
+});
+
+
 // SPA routes
 app.get('/share/:id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/compare', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
@@ -1413,6 +1479,7 @@ app.get('/samples', (req, res) => res.sendFile(path.join(__dirname, 'public', 'i
 app.get('/account', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/glossary', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/bulk', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/bulk/:id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/templates', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/templates/:id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 

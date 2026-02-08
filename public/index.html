@@ -656,7 +656,16 @@
       <p class="section-sub">Upload multiple contracts at once. Get a summary dashboard and risk comparison across all files.</p>
 
       <div class="card">
-        <div class="upload-area" id="bulk-upload-area" style="min-height:180px;border-width:3px">
+        <div id="bulk-history-section" class="hidden" style="margin-bottom:1.5rem">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3>📂 Previous Bulk Sessions</h3>
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('bulk-history-section').classList.add('hidden')">Hide</button>
+    </div>
+    <div id="bulk-history-list" style="margin-top:0.75rem"></div>
+  </div>
+</div>
+<div class="upload-area" id="bulk-upload-area" style="min-height:180px;border-width:3px">
           <div class="upload-icon" style="font-size:3rem">📂</div>
           <div style="font-size:1.1rem;font-weight:600;margin-bottom:0.3rem">Drop multiple files here</div>
           <div class="upload-text">or click to select files (PDF, TXT, DOC — up to 20 files)</div>
@@ -693,14 +702,32 @@
         <div class="card fade-in">
           <div class="card-header">
             <h2>📊 Summary Dashboard</h2>
-            <button class="btn btn-secondary btn-sm" onclick="clearBulkResults()">+ New Batch</button>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap"><button class="btn btn-secondary btn-sm" onclick="exportBulkCSV()">📥 Export CSV</button><button class="btn btn-secondary btn-sm" onclick="saveBulkSession()">💾 Save Session</button><button class="btn btn-secondary btn-sm" onclick="clearBulkResults()">+ New Batch</button></div>
           </div>
 
           <!-- Stats row -->
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:1rem" id="bulk-stats"></div>
         </div>
 
-        <!-- Risk Distribution -->
+        <!-- Comparison Table -->
+<div class="card fade-in" style="margin-top:1rem">
+  <h3>📊 Side-by-Side Comparison</h3>
+  <div style="overflow-x:auto;margin-top:1rem">
+    <table id="bulk-comparison-table" style="width:100%;border-collapse:collapse;font-size:0.85rem">
+      <thead><tr style="background:var(--surface2)">
+        <th style="padding:0.75rem;text-align:left;border-bottom:2px solid var(--border)">Contract</th>
+        <th style="padding:0.75rem;text-align:center;border-bottom:2px solid var(--border)">Risk Score</th>
+        <th style="padding:0.75rem;text-align:center;border-bottom:2px solid var(--border)">Red Flags</th>
+        <th style="padding:0.75rem;text-align:left;border-bottom:2px solid var(--border)">Top 3 Issues</th>
+        <th style="padding:0.75rem;text-align:center;border-bottom:2px solid var(--border)">Safe Clauses</th>
+        <th style="padding:0.75rem;text-align:center;border-bottom:2px solid var(--border)">Risky Clauses</th>
+      </tr></thead>
+      <tbody id="bulk-comparison-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Risk Distribution -->
         <div class="card fade-in" style="margin-top:1rem">
           <h3>📈 Risk Distribution</h3>
           <div id="bulk-risk-chart" style="margin-top:1rem"></div>
@@ -714,7 +741,23 @@
 
         <!-- Ranking / Comparison -->
         <div class="card fade-in" style="margin-top:1rem">
-          <h3>🏆 Contract Risk Ranking (Highest Risk First)</h3>
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem">
+  <h3 style="margin:0">🏆 Contract Risk Ranking</h3>
+  <div style="display:flex;gap:0.5rem;align-items:center">
+    <select id="bulk-filter-risk" onchange="applyBulkFilters()" style="padding:0.4rem 0.8rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.85rem">
+      <option value="all">All Risk Levels</option>
+      <option value="high">🔴 High Risk</option>
+      <option value="medium">🟡 Medium Risk</option>
+      <option value="low">🟢 Low Risk</option>
+    </select>
+    <select id="bulk-sort" onchange="applyBulkFilters()" style="padding:0.4rem 0.8rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.85rem">
+      <option value="risk-desc">Risk: High → Low</option>
+      <option value="risk-asc">Risk: Low → High</option>
+      <option value="flags-desc">Flags: Most → Least</option>
+      <option value="name-asc">Name: A → Z</option>
+    </select>
+  </div>
+</div>
           <div id="bulk-ranking" style="margin-top:1rem"></div>
         </div>
 
@@ -880,7 +923,8 @@
       }
 
       // Check for bulk URL
-      if (location.pathname === '/bulk') { showPage('bulk'); }
+      if (location.pathname === '/bulk') { showPage('bulk'); loadBulkHistory(); }
+      if (location.pathname.startsWith('/bulk/')) { const bid = location.pathname.split('/bulk/')[1]; showPage('bulk'); loadBulkSession(bid); }
 
       // Check for share URL
       if (location.pathname.startsWith('/share/')) {
@@ -1840,6 +1884,7 @@
         </div>`;
       }).join('');
 
+      renderBulkComparisonTable(results);
       document.getElementById('bulk-dashboard').scrollIntoView({ behavior: 'smooth' });
     }
 
@@ -1852,7 +1897,130 @@
     }
 
 
+    
+    // ========== BULK SORT/FILTER ==========
+    function applyBulkFilters() {
+      if (!bulkResults) return;
+      const filter = document.getElementById('bulk-filter-risk').value;
+      const sort = document.getElementById('bulk-sort').value;
+      let items = [...bulkResults.summary.ranking];
+      if (filter !== 'all') items = items.filter(r => r.riskLevel === filter);
+      switch(sort) {
+        case 'risk-desc': items.sort((a,b) => b.riskScore - a.riskScore); break;
+        case 'risk-asc': items.sort((a,b) => a.riskScore - b.riskScore); break;
+        case 'flags-desc': items.sort((a,b) => b.redFlagCount - a.redFlagCount); break;
+        case 'name-asc': items.sort((a,b) => a.filename.localeCompare(b.filename)); break;
+      }
+      renderBulkRanking(items);
+    }
+
+    function renderBulkRanking(items) {
+      document.getElementById('bulk-ranking').innerHTML = items.length === 0
+        ? '<p style="color:var(--text-muted)">No contracts match the filter.</p>'
+        : items.map((r, i) => {
+        const color = r.riskLevel === 'high' ? 'var(--red)' : r.riskLevel === 'medium' ? 'var(--orange)' : 'var(--green)';
+        return `<div class="bulk-rank-item ${r.riskLevel}">
+          <div class="bulk-rank-num">#${i + 1}</div>
+          <div class="bulk-rank-info">
+            <div style="font-weight:600">${escHtml(r.filename)}</div>
+            <div style="font-size:0.8rem;color:var(--text-muted)">${r.documentType || 'Unknown'} · ${r.redFlagCount} red flags</div>
+          </div>
+          <div class="bulk-rank-score" style="color:${color}">${r.riskScore}/100</div>
+        </div>`;
+      }).join('');
+    }
+
+    // ========== BULK COMPARISON TABLE ==========
+    function renderBulkComparisonTable(results) {
+      const valid = results.filter(r => r.analysis);
+      const tbody = document.getElementById('bulk-comparison-body');
+      tbody.innerHTML = valid.map(r => {
+        const a = r.analysis;
+        const color = a.riskLevel === 'high' ? '#ef4444' : a.riskLevel === 'medium' ? '#f59e0b' : '#22c55e';
+        const topIssues = a.redFlags.slice(0, 3).map(f => '<span style="display:inline-block;padding:0.15rem 0.5rem;background:var(--surface2);border-radius:4px;margin:0.1rem;font-size:0.8rem">' + escHtml(f.name) + '</span>').join(' ') || '<span style="color:var(--green)">None</span>';
+        const cs = a.clauseAnnotations?.stats || { safe: 0, caution: 0, danger: 0 };
+        return `<tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:0.75rem;font-weight:600">${escHtml(r.filename)}<br><span style="font-size:0.75rem;color:var(--text-muted)">${a.documentType?.label || 'Unknown'}</span></td>
+          <td style="padding:0.75rem;text-align:center"><span style="font-weight:800;font-size:1.1rem;color:${color}">${a.riskScore}</span></td>
+          <td style="padding:0.75rem;text-align:center;font-weight:700;color:${a.redFlags.length > 5 ? '#ef4444' : a.redFlags.length > 2 ? '#f59e0b' : '#22c55e'}">${a.redFlags.length}</td>
+          <td style="padding:0.75rem">${topIssues}</td>
+          <td style="padding:0.75rem;text-align:center;color:#22c55e;font-weight:600">${cs.safe}</td>
+          <td style="padding:0.75rem;text-align:center;color:#ef4444;font-weight:600">${cs.caution + cs.danger}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ========== BULK CSV EXPORT ==========
+    async function exportBulkCSV() {
+      if (!bulkResults) return;
+      try {
+        const res = await fetch('/api/bulk-export-csv', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ results: bulkResults.results })
+        });
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'bulk-analysis-summary.csv'; a.click();
+        URL.revokeObjectURL(url);
+      } catch(e) { alert('Export failed: ' + e.message); }
+    }
+
+    // ========== BULK SESSION SAVE/LOAD ==========
+    async function saveBulkSession() {
+      if (!bulkResults) return;
+      const name = prompt('Name this bulk session:', 'Batch ' + new Date().toLocaleDateString());
+      if (!name) return;
+      try {
+        const res = await fetch('/api/bulk-sessions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, summary: bulkResults.summary, results: bulkResults.results })
+        });
+        if (res.ok) { alert('✅ Session saved! You can find it in your bulk history.'); loadBulkHistory(); }
+        else { const d = await res.json(); alert(d.error || 'Save failed'); }
+      } catch(e) { alert('Save failed: ' + e.message); }
+    }
+
+    async function loadBulkHistory() {
+      try {
+        const res = await fetch('/api/bulk-sessions');
+        const sessions = await res.json();
+        const section = document.getElementById('bulk-history-section');
+        const list = document.getElementById('bulk-history-list');
+        if (sessions.length === 0) { section.classList.add('hidden'); return; }
+        section.classList.remove('hidden');
+        list.innerHTML = sessions.map(s => {
+          const d = new Date(s.created_at).toLocaleString();
+          const sm = s.summary;
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 1rem;background:var(--surface2);border-radius:8px;margin-bottom:0.5rem;cursor:pointer" onclick="loadBulkSession('${s.id}')" title="Click to load">
+            <div><span style="font-weight:600">${escHtml(s.name)}</span><br><span style="font-size:0.8rem;color:var(--text-muted)">${d} · ${sm.analyzed} contracts · Avg risk: ${sm.avgRiskScore}</span></div>
+            <div style="display:flex;gap:0.5rem;align-items:center">
+              <span style="font-weight:700;color:${sm.avgRiskScore >= 70 ? 'var(--red)' : sm.avgRiskScore >= 40 ? 'var(--orange)' : 'var(--green)'}">${sm.avgRiskScore}/100</span>
+              <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();deleteBulkSession('${s.id}')" title="Delete">🗑️</button>
+            </div>
+          </div>`;
+        }).join('');
+      } catch(e) {}
+    }
+
+    async function loadBulkSession(id) {
+      try {
+        const res = await fetch('/api/bulk-sessions/' + id);
+        const data = await res.json();
+        bulkResults = data;
+        displayBulkDashboard(data);
+      } catch(e) { alert('Failed to load session'); }
+    }
+
+    async function deleteBulkSession(id) {
+      if (!confirm('Delete this session?')) return;
+      await fetch('/api/bulk-sessions/' + id, { method: 'DELETE' });
+      loadBulkHistory();
+    }
+
     // ========== NEGOTIATION PLAYBOOK ==========
+
     function displayNegotiationPlaybook(playbook) {
       if (!playbook || !playbook.suggestions.length) {
         document.getElementById('negotiation-content').innerHTML = '<p style="color:var(--green);font-size:1rem">✅ No negotiation points needed — this contract looks fair!</p>';
